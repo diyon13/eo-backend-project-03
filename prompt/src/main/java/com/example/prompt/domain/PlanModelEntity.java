@@ -1,4 +1,4 @@
 package com.example.prompt.domain;
 
-public class PlanMdelEntity {
+public class PlanModelEntity {
 }
