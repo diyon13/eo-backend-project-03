@@ -7,7 +7,7 @@ import org.springframework.data.repository.Repository;
 
 import java.util.Optional;
 
-interface UserRepository extends JpaRepository<UserEntity, Long> {
+public interface UserRepository extends JpaRepository<UserEntity, Long> {
 
     Optional<UserEntity> findByUserid(String userid);
 
