@@ -38,22 +38,62 @@ class SecurityConfiguration {
         return config.getAuthenticationManager();
     }
 
+    /**
+     * /api/** 요청에 적용되는 SecurityFilterChain (JWT 인증, Stateless)
+     * "http://localhost:8080/api/..." 요청 처리
+     */
     @Bean
+    @Order(1)
+    public SecurityFilterChain apiSecurityFilterChain(HttpSecurity http) throws Exception {
+        http
+                .securityMatcher("/api/**")
+                .httpBasic(AbstractHttpConfigurer::disable)
+                .formLogin(AbstractHttpConfigurer::disable)
+                .logout(AbstractHttpConfigurer::disable)
+                .csrf(AbstractHttpConfigurer::disable)
+                .sessionManagement(session -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
+                .authorizeHttpRequests(auth -> auth
+                        // 인증 없이 허용 (회원가입, 이메일, 비밀번호 재설정)
+                        .requestMatchers(
+                                "/api/users",
+                                "/api/users/check-id",
+                                "/api/email/**",
+                                "/api/user/reset-password",
+                                "/api/admin/auth/login"
+                        ).permitAll()
+                        // 관리자 API - JWT 인증 필요
+                        .requestMatchers("/api/admin/**").authenticated()
+                        // 채팅 API - 로그인한 사용자만 (@AuthenticationPrincipal NPE 방지)
+                        .requestMatchers("/api/chat/**").authenticated()
+                        // 나머지 API (결제, 마이페이지 등) - 로그인 필요
+                        .anyRequest().authenticated()
+                )
+                .addFilterBefore(
+                        new JwtAuthenticationFilter(jwtProvider),
+                        UsernamePasswordAuthenticationFilter.class
+                );
+
+        return http.build();
+    }
+
+    /**
+     * 그 외 모든 요청에 적용되는 SecurityFilterChain (Form 로그인, OAuth2)
+     * "http://localhost:8080/login", "http://localhost:8080/" 등 처리
+     */
+    @Bean
+    @Order(2)
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/", "/index",
-                                "/api/users",               // 회원가입
-                                "/api/users/check-id",      // 아이디 중복확인
-                                "/api/email/**",            // 이메일 인증
-                                "/api/user/reset-password", // 비밀번호 재설정
                                 "/login", "/signup",
                                 "/payment",
                                 "/oauth2/**",
                                 "/h2-console/**"
                         ).permitAll()
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
                 // Form 로그인
@@ -85,51 +125,6 @@ class SecurityConfiguration {
                 .headers(headers -> headers
                         .frameOptions(frame -> frame.sameOrigin())
                 );
-
-        return http.build();
-    }
-
-    /**
-     * /api/** 요청에 적용되는 SecurityFilterChain
-     */
-    @Bean
-    @Order(1)
-    public SecurityFilterChain apiSecurityFilterChain(HttpSecurity http) throws Exception {
-        http
-                .securityMatcher("/api/**")
-                .httpBasic(AbstractHttpConfigurer::disable)
-                .formLogin(AbstractHttpConfigurer::disable)
-                .logout(AbstractHttpConfigurer::disable)
-                .csrf(AbstractHttpConfigurer::disable)
-                .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                )
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/admin/auth/login").permitAll()
-                        .requestMatchers("/api/admin/**").authenticated()
-                        .anyRequest().permitAll()
-                )
-                .addFilterBefore(
-                        new JwtAuthenticationFilter(jwtProvider),
-                        UsernamePasswordAuthenticationFilter.class
-                );
-
-        return http.build();
-    }
-
-    /**
-     * 그 외 요청에 적용되는 SecurityFilterChain
-     */
-    @Bean
-    @Order(2)
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http
-                .csrf(AbstractHttpConfigurer::disable)
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/", "/h2-console/**").permitAll()
-                        .anyRequest().permitAll()
-                )
-                .headers(headers -> headers.frameOptions(frame -> frame.disable()));
 
         return http.build();
     }
