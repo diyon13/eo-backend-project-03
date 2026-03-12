@@ -10,16 +10,13 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 
-/**
- * 페이지 라우팅 Controller
- * Thymeleaf 템플릿을 반환하는 역할
- */
 @Controller
 @RequiredArgsConstructor
 public class PageController {
 
     private final UserService userService;
 
+    // "http://localhost:8080/" 메인 페이지
     @GetMapping("/")
     public String index(@AuthenticationPrincipal Object principal, Model model) {
         injectUser(principal, model);
@@ -28,7 +25,8 @@ public class PageController {
 
     // "http://localhost:8080/chat" 채팅 페이지
     @GetMapping("/chat")
-    public String chat() {
+    public String chat(@AuthenticationPrincipal Object principal, Model model) {
+        injectUser(principal, model);
         return "ai-chat/chat";
     }
 
@@ -46,16 +44,25 @@ public class PageController {
         return "signup";
     }
 
-    @GetMapping("/reset-password")
-    public String resetPassword(@AuthenticationPrincipal Object principal, Model model) {
+    // "http://localhost:8080/mypage" 마이페이지
+    @GetMapping("/mypage")
+    public String mypage(@AuthenticationPrincipal Object principal, Model model) {
         injectUser(principal, model);
-        return "reset-password";
+        return "mypage";
     }
 
+    // "http://localhost:8080/payment" 결제 페이지
     @GetMapping("/payment")
     public String payment(@AuthenticationPrincipal Object principal, Model model) {
         injectUser(principal, model);
         return "payment";
+    }
+
+    // "http://localhost:8080/reset-password" 비밀번호 찾기 페이지
+    @GetMapping("/reset-password")
+    public String resetPassword(@AuthenticationPrincipal Object principal, Model model) {
+        injectUser(principal, model);
+        return "reset-password";
     }
 
     // 로그인한 유저 정보 model에 주입

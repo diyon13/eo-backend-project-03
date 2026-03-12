@@ -1,5 +1,6 @@
 package com.example.prompt.client;
 
+import com.example.prompt.dto.alan.AlanAiDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -17,19 +18,14 @@ import java.util.Map;
 @Slf4j
 public class AlanAiClient {
 
-    // AlanAiConfig 에서 만든 WebClient Bean 주입
     private final WebClient alanWebClient;
 
-    // application.yml 의 alan.client-id 값 주입 (받은 키 값)
     @Value("${alan.client-id}")
     private String clientId;
 
     /**
-     * SSE 스트리밍 호출 — ChatGPT처럼 글자가 하나씩 오는 방식
+     * SSE 스트리밍 호출
      * GET /api/v1/question/sse-streaming?client_id=xxx&content=xxx
-     *
-     * @param content 사용자가 입력한 메시지
-     * @return 글자 조각(chunk)들의 스트림
      */
     public Flux<String> streamChat(String content) {
         log.info("content = {}", content);
@@ -50,16 +46,69 @@ public class AlanAiClient {
     /**
      * 대화 기록 초기화
      * DELETE /api/v1/reset-state  body: {"client_id": "xxx"}
-     * → 채팅방 삭제 시 앨런 AI 서버의 대화 기록도 같이 지움
      */
     public void resetState() {
         log.info("앨런 AI 상태 초기화");
 
-        alanWebClient.method(HttpMethod.DELETE)  // ← 이렇게 변경
+        alanWebClient.method(HttpMethod.DELETE)
                 .uri("/reset-state")
                 .bodyValue(Map.of("client_id", clientId))
                 .retrieve()
                 .bodyToMono(String.class)
+                .block();
+    }
+
+    /**
+     * 페이지 요약
+     * POST /api/v1/chrome/page/summary
+     * body: { "content": "페이지 내용" }
+     */
+    public String summarizePage(String content) {
+        log.info("페이지 요약 요청 - content length = {}", content.length());
+
+        return alanWebClient.post()
+                .uri("/chrome/page/summary")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(Map.of("content", content))
+                .retrieve()
+                .bodyToMono(String.class)
+                .doOnError(e -> log.error("페이지 요약 오류 = {}", e.getMessage()))
+                .block();
+    }
+
+    /**
+     * 페이지 번역
+     * POST /api/v1/chrome/page/translate
+     * body: { "contents": ["텍스트1", "텍스트2"] }
+     */
+    public String translatePage(AlanAiDto.PageTranslateRequest request) {
+        log.info("페이지 번역 요청 - contents size = {}", request.getContents().size());
+
+        return alanWebClient.post()
+                .uri("/chrome/page/translate")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(Map.of("contents", request.getContents()))
+                .retrieve()
+                .bodyToMono(String.class)
+                .doOnError(e -> log.error("페이지 번역 오류 = {}", e.getMessage()))
+                .block();
+    }
+
+    /**
+     * 유튜브 자막 요약
+     * POST /api/v1/summary-youtube
+     * body: { "subtitle": [...] }
+     */
+    public AlanAiDto.YoutubeSubtitleResponse summarizeYoutube(AlanAiDto.YoutubeSubtitleRequest request) {
+        log.info("유튜브 자막 요약 요청 - chapters size = {}", request.getSubtitle().size());
+
+        return alanWebClient.post()
+                .uri("/summary-youtube")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(Map.of("subtitle", request.getSubtitle()))
+                .retrieve()
+                .bodyToMono(AlanAiDto.YoutubeSubtitleResponse.class)
+                .doOnError(e -> log.error("유튜브 요약 오류 = {}", e.getMessage()))
                 .block();
     }
 }

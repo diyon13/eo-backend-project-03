@@ -31,8 +31,9 @@ public class PlanEntity {
     private int tokenLimit;
 
     // 사용량
-    @Column(name = "ai_use", nullable = false)
-    private int aiUse;
+    @Builder.Default
+    @Column(name = "ai_use", nullable = false, columnDefinition = "TINYINT DEFAULT 1")
+    private int aiUse = 1;
 
     // 가격
     @Column(name = "price", nullable = false)

@@ -1,0 +1,595 @@
+/* CSS 변수 선언 */
+:root {
+    --bg:           #ffffff;
+    --bg-sidebar:   #f7f7f8;
+    --bg-input:     #f4f4f5;
+    --bg-hover:     rgba(0, 0, 0, 0.05);
+    --bg-active:    rgba(0, 0, 0, 0.08);
+    --bg-user:      #e8f0fe;
+    --border:       rgba(0, 0, 0, 0.1);
+    --accent:       #4f8ef7;
+    --accent-dim:   rgba(79, 142, 247, 0.1);
+    --text:         #1a1a1a;
+    --text-sub:     #666;
+    --text-muted:   #aaa;
+    --danger:       #e05252;
+    --sidebar-w:    220px;
+    --radius:       12px;
+}
+
+/* 스크린 리더 전용 (시각장애인 접근성) */
+.srOnly {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* 공통 */
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 14px;
+    background-color: var(--bg);
+    color: var(--text);
+    height: 100vh;
+    display: flex;
+    overflow: hidden;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* 사이드바 */
+aside {
+    width: var(--sidebar-w);
+    min-width: var(--sidebar-w);
+    height: 100vh;
+    background-color: var(--bg-sidebar);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    transition: width 0.2s ease, min-width 0.2s ease;
+    overflow: hidden;
+}
+
+/* 접힘 상태: 헤더(토글 버튼)만 남기고 나머지 숨김 */
+aside.collapsed {
+    width: 48px;
+    min-width: 48px;
+}
+
+aside.collapsed > #sidebarNew,
+aside.collapsed > nav,
+aside.collapsed > #sidebarBottom {
+    display: none;
+}
+
+aside.collapsed > header > a {
+    display: none;
+}
+
+/* 헤더: 토글버튼(왼쪽) + 로고(오른쪽) */
+aside > header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 10px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+}
+
+/* 로고 앵커 */
+aside > header > a {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    flex: 1;
+    min-width: 0;
+}
+
+aside > header > a > span {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: color 0.15s;
+}
+
+aside > header > a:hover > span {
+    color: var(--accent);
+}
+
+/* 메뉴 토글 버튼 (배경 이미지) */
+#btnToggle {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    cursor: pointer;
+    flex-shrink: 0;
+    background-color: transparent;
+    background-image: url('/images/menu-button.png');
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+    border: 1px solid transparent;
+    transition: background-color 0.15s, border-color 0.15s;
+}
+
+#btnToggle:hover {
+    background-color: var(--bg-hover);
+    border-color: var(--border);
+}
+
+/* 새 채팅 버튼 */
+aside > div {
+    padding: 10px 10px 4px;
+}
+
+#btnNew {
+    display: block;
+    width: 100%;
+    padding: 8px 12px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--accent);
+    background-color: var(--accent-dim);
+    border: 1px solid rgba(79, 142, 247, 0.3);
+    border-radius: 8px;
+    cursor: pointer;
+    text-align: center;
+    transition: background-color 0.12s, border-color 0.12s;
+}
+
+#btnNew:hover {
+    background-color: rgba(79, 142, 247, 0.18);
+    border-color: var(--accent);
+}
+
+/* 채팅방 목록 */
+aside > nav {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0 8px;
+}
+
+aside > nav::-webkit-scrollbar { width: 3px; }
+
+aside > nav::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.15);
+    border-radius: 2px;
+}
+
+aside > nav > p {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    padding: 8px 6px 4px;
+}
+
+aside > nav > ul {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+aside > nav > ul > li {
+    display: flex;
+    align-items: center;
+    border-radius: 8px;
+    overflow: hidden;
+    transition: background-color 0.12s;
+}
+
+aside > nav > ul > li:hover { background-color: var(--bg-hover); }
+aside > nav > ul > li.active { background-color: var(--bg-active); }
+
+aside > nav > ul > li > button:first-child {
+    flex: 1;
+    padding: 8px;
+    font-size: 13px;
+    color: var(--text);
+    text-align: left;
+    cursor: pointer;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+aside > nav > ul > li > button:last-child {
+    padding: 6px 8px;
+    font-size: 13px;
+    color: transparent;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: color 0.12s, background-color 0.12s;
+}
+
+aside > nav > ul > li:hover > button:last-child { color: var(--text-muted); }
+
+aside > nav > ul > li > button:last-child:hover {
+    color: var(--danger);
+    background-color: rgba(224, 82, 82, 0.1);
+}
+
+aside > nav > ul > li.roomEmpty {
+    padding: 8px 6px;
+    font-size: 12px;
+    color: var(--text-muted);
+    cursor: default;
+}
+
+aside > nav > ul > li.roomEmpty:hover { background-color: transparent; }
+
+/* 사이드바 하단 (footer 대신 div 사용) */
+#sidebarBottom {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    border-top: 1px solid var(--border);
+}
+
+#sidebarBottom > div {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    min-width: 0;
+}
+
+#sidebarBottom > div > img {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+#sidebarBottom > div > span {
+    font-size: 12px;
+    color: var(--text-sub);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* 설정 버튼 (배경 이미지) */
+#btnSettings {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    cursor: pointer;
+    flex-shrink: 0;
+    background-color: transparent;
+    background-image: url('/images/settings-button.png');
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 65%;
+    border: 1px solid transparent;
+    transition: background-color 0.15s, border-color 0.15s;
+}
+
+#btnSettings:hover {
+    background-color: var(--bg-hover);
+    border-color: var(--border);
+}
+
+/* 설정 팝업 */
+#settingsMenu {
+    position: absolute;
+    bottom: calc(100% + 6px);
+    right: 10px;
+    min-width: 180px;
+    background-color: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    z-index: 100;
+}
+
+#settingsMenu > li > button {
+    display: block;
+    width: 100%;
+    padding: 10px 14px;
+    font-size: 13px;
+    color: var(--text);
+    text-align: left;
+    cursor: pointer;
+    transition: background-color 0.1s;
+}
+
+#settingsMenu > li > button:hover { background-color: var(--bg-hover); }
+
+/* 메인 */
+main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* 빈 상태 - 화면 정 가운데 입력창 */
+#empty {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+}
+
+#empty > div {
+    width: 100%;
+    max-width: 680px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+}
+
+#empty > div > h1 {
+    font-size: 26px;
+    font-weight: 600;
+    color: var(--text);
+    text-align: center;
+    letter-spacing: -0.5px;
+}
+
+#greetName {
+    color: var(--accent);
+}
+
+/* 입력박스 (공통) */
+.inputBox {
+    width: 100%;
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    background-color: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+    transition: border-color 0.15s;
+}
+
+.inputBox:focus-within {
+    border-color: rgba(79, 142, 247, 0.6);
+    background-color: var(--bg);
+}
+
+#emptyInput,
+#userInput {
+    flex: 1;
+    background-color: transparent;
+    border: none;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 14px;
+    resize: none;
+    line-height: 1.6;
+    min-height: 24px;
+    max-height: 160px;
+    overflow-y: auto;
+    field-sizing: content;
+}
+
+#emptyInput:focus,
+#userInput:focus { outline: none; }
+
+#emptyInput::placeholder,
+#userInput::placeholder { color: var(--text-muted); }
+
+/* 전송 버튼 (배경 이미지) */
+#emptySendBtn,
+#sendBtn {
+    position: relative;
+    flex-shrink: 0;
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    background-color: var(--accent);
+    cursor: pointer;
+    overflow: hidden;
+    transition: background-color 0.15s;
+}
+
+/* 아이콘만 filter 적용 (배경색 반전 방지) */
+#emptySendBtn::after,
+#sendBtn::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url('/images/send-button11013530.png');
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 55%;
+    filter: brightness(0) invert(1);
+}
+
+#emptySendBtn:hover,
+#sendBtn:hover { background-color: #6aa0ff; }
+
+#emptySendBtn:disabled,
+#sendBtn:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+/* 모델 선택 */
+.modelSelector {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+#emptyModelSelector { justify-content: center; }
+
+#chatModelSelector { margin-top: 8px; }
+
+.modelSelector > button {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-family: monospace;
+    border: 1px solid var(--border);
+    color: var(--text-sub);
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s, background-color 0.15s;
+}
+
+.modelSelector > button:hover,
+.modelSelector > button[aria-pressed="true"] {
+    border-color: var(--accent);
+    color: var(--accent);
+    background-color: var(--accent-dim);
+}
+
+.modelSelector > button[aria-pressed="true"]::before {
+    content: '';
+    display: inline-block;
+    width: 5px;
+    height: 5px;
+    background-color: var(--accent);
+    border-radius: 50%;
+    margin-right: 5px;
+    vertical-align: middle;
+}
+
+/* 채팅 뷰 */
+#chatView {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+}
+
+#messagesWrap {
+    flex: 1;
+    overflow-y: auto;
+    padding: 32px 0 16px;
+}
+
+#messagesWrap::-webkit-scrollbar { width: 4px; }
+
+#messagesWrap::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.1);
+    border-radius: 2px;
+}
+
+#messages {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 0 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+/* 메시지 행 */
+.msg {
+    display: flex;
+    gap: 12px;
+    animation: fadeUp 0.18s ease;
+}
+
+.msg.user { flex-direction: row-reverse; }
+
+@keyframes fadeUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.msg > figure {
+    flex-shrink: 0;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    margin-top: 2px;
+}
+
+.msg.user > figure      { background-color: var(--accent); color: #fff; }
+.msg.assistant > figure { background-color: #e8e8e8; color: var(--text); }
+
+.msg > div {
+    max-width: 75%;
+    font-size: 14px;
+    line-height: 1.7;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.msg.user > div {
+    background-color: var(--bg-user);
+    border: 1px solid rgba(79, 142, 247, 0.2);
+    padding: 10px 14px;
+    border-radius: 14px 14px 4px 14px;
+}
+
+.msg.assistant > div { padding: 4px 0; }
+
+.msg > div.streaming::after {
+    content: '|';
+    color: var(--accent);
+    animation: blink 0.7s infinite;
+    margin-left: 1px;
+}
+
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0; }
+}
+
+.msg > div.error { color: var(--danger); }
+
+/* 채팅 입력 영역 */
+#chatInputArea {
+    max-width: 728px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 12px 24px 20px;
+    align-self: stretch;
+}
+
+/* 토스트 */
+#toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(12px);
+    background-color: #333;
+    color: #fff;
+    font-size: 13px;
+    padding: 9px 16px;
+    border-radius: 8px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s, transform 0.2s;
+    z-index: 999;
+    white-space: nowrap;
+}
+
+#toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+#toast.error {
+    background-color: var(--danger);
+}
