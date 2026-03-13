@@ -137,6 +137,50 @@ window.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    /* 회원 탈퇴 */
+    const withdrawBtn      = document.getElementById('withdraw-btn');
+    const withdrawError    = document.getElementById('withdraw-error');
+    const withdrawErrorMsg = document.getElementById('withdraw-error-msg');
+
+    if (withdrawBtn) {
+        withdrawBtn.addEventListener('click', async function () {
+            const confirmed = confirm('정말로 탈퇴하시겠습니까?\n탈퇴 후에는 복구가 불가능합니다.');
+            if (!confirmed) return;
+
+            withdrawBtn.disabled = true;
+            withdrawBtn.textContent = '처리 중...';
+            withdrawError.style.display = 'none';
+
+            try {
+                const csrfToken = document.getElementById('csrf-token')?.value;
+
+                const res = await fetch('/mypage/withdraw', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...(csrfToken && { 'X-CSRF-TOKEN': csrfToken })
+                    },
+                    credentials: 'include'
+                });
+                const data = await res.json();
+                if (data.success) {
+                    alert('탈퇴가 완료되었습니다.\n이용해 주셔서 감사합니다.');
+                    window.location.href = '/login';
+                } else {
+                    withdrawErrorMsg.textContent = data.message || '탈퇴 처리에 실패했습니다.';
+                    withdrawError.style.display = 'block';
+                    withdrawBtn.disabled = false;
+                    withdrawBtn.textContent = '회원 탈퇴';
+                }
+            } catch (e) {
+                withdrawErrorMsg.textContent = '오류가 발생했습니다. 다시 시도해주세요.';
+                withdrawError.style.display = 'block';
+                withdrawBtn.disabled = false;
+                withdrawBtn.textContent = '회원 탈퇴';
+            }
+        });
+    }
+
     /*  유틸 */
     function setMsg(el, msg, type) {
         el.textContent = msg;

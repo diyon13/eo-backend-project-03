@@ -319,3 +319,106 @@
         width: 120px;
     }
 }
+/* 회원 탈퇴 */
+.withdraw-menu {
+    color: #c0392b !important;
+    margin-top: auto;
+}
+
+.withdraw-menu:hover {
+    background: #fff0f0 !important;
+    color: #c0392b !important;
+}
+
+.withdraw-menu.active {
+    background: #fff0f0 !important;
+    color: #c0392b !important;
+}
+
+[data-theme="dark"] .withdraw-menu {
+    color: #e07070 !important;
+}
+
+[data-theme="dark"] .withdraw-menu:hover,
+[data-theme="dark"] .withdraw-menu.active {
+    background: #2a1a1a !important;
+    color: #e07070 !important;
+}
+
+.withdraw-warning {
+    background: #fff8f0;
+    border: 1px solid #ffd0a0;
+    border-radius: var(--radius-sm);
+    padding: 1rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+[data-theme="dark"] .withdraw-warning {
+    background: #2a2010;
+    border-color: #5a4010;
+}
+
+.withdraw-warning-title {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: #e67e22;
+}
+
+[data-theme="dark"] .withdraw-warning-title {
+    color: #e0a060;
+}
+
+.withdraw-warning ul {
+    padding-left: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.withdraw-warning li {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+#withdraw-error {
+    padding: 0.75rem 1rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.875rem;
+    background: #fff0f0;
+    border: 1px solid #ffd0d0;
+    color: #c0392b;
+}
+
+[data-theme="dark"] #withdraw-error {
+    background: #2a1a1a;
+    border-color: #5a2a2a;
+    color: #e07070;
+}
+
+#withdraw-btn {
+    width: 100%;
+    padding: 0.8125rem;
+    background: #c0392b;
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: 0.9375rem;
+    font-weight: 600;
+    font-family: var(--font-body);
+    cursor: pointer;
+    transition: background-color var(--transition), transform var(--transition);
+    margin-top: 0.25rem;
+}
+
+#withdraw-btn:hover {
+    background: #a93226;
+    transform: translateY(-1px);
+}
+
+#withdraw-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}

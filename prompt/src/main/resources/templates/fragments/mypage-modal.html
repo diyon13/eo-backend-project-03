@@ -26,6 +26,7 @@
             <nav id="mypage-sidebar">
                 <button class="mypage-menu active" data-tab="info">내 정보</button>
                 <button class="mypage-menu" data-tab="password">비밀번호 변경</button>
+                <button class="mypage-menu withdraw-menu" data-tab="withdraw">회원 탈퇴</button>
             </nav>
 
             <!-- 콘텐츠 -->
@@ -81,6 +82,26 @@
                     </div>
 
                     <button type="button" id="update-password-btn">비밀번호 변경</button>
+                </div>
+
+                <!-- 회원 탈퇴 탭 -->
+                <div class="mypage-tab" id="tab-withdraw">
+                    <h3>회원 탈퇴</h3>
+                    <div class="withdraw-warning">
+                        <p class="withdraw-warning-title">탈퇴 전 꼭 확인해주세요</p>
+                        <ul>
+                            <li>탈퇴 시 모든 데이터가 비활성화됩니다.</li>
+                            <li>사용 중인 플랜 및 토큰이 소멸됩니다.</li>
+                            <li>탈퇴 후 동일 아이디로 재가입이 불가합니다.</li>
+                        </ul>
+                    </div>
+
+                    <!-- 에러 메시지 -->
+                    <div id="withdraw-error" style="display:none;">
+                        <span id="withdraw-error-msg"></span>
+                    </div>
+
+                    <button type="button" id="withdraw-btn">회원 탈퇴</button>
                 </div>
 
             </div>
