@@ -14,8 +14,6 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -35,14 +33,16 @@ class SecurityConfiguration {
     }
 
     /**
-     * /api/** 요청에 적용되는 SecurityFilterChain (JWT 인증, Stateless)
+     * JWT 체인 - /api/chat/** 제외 (세션 체인에서 처리)
      * "http://localhost:8080/api/..." 요청 처리
      */
     @Bean
     @Order(1)
     public SecurityFilterChain apiSecurityFilterChain(HttpSecurity http) throws Exception {
         http
-                .securityMatcher("/api/**")
+                // /api/chat/** 는 Order(2) 세션 체인에서 처리
+                .securityMatcher("/api/users/**", "/api/email/**", "/api/admin/**",
+                        "/api/user/**", "/api/payment/**", "/api/alan/**", "/api/stats/**")
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .formLogin(AbstractHttpConfigurer::disable)
                 .logout(AbstractHttpConfigurer::disable)
@@ -51,7 +51,6 @@ class SecurityConfiguration {
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
                 .authorizeHttpRequests(auth -> auth
-                        // 인증 없이 허용 (회원가입, 이메일, 비밀번호 재설정)
                         .requestMatchers(
                                 "/api/users",
                                 "/api/users/check-id",
@@ -60,11 +59,7 @@ class SecurityConfiguration {
                                 "/api/admin/auth/login",
                                 "/api/stats"
                         ).permitAll()
-                        // 관리자 API - JWT 인증 필요
                         .requestMatchers("/api/admin/**").authenticated()
-                        // 채팅 API - 로그인한 사용자만 (@AuthenticationPrincipal NPE 방지)
-                        .requestMatchers("/api/chat/**").authenticated()
-                        // 나머지 API (결제, 마이페이지 등) - 로그인 필요
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(
@@ -81,8 +76,8 @@ class SecurityConfiguration {
     }
 
     /**
-     * 그 외 모든 요청에 적용되는 SecurityFilterChain (Form 로그인, OAuth2)
-     * "http://localhost:8080/login", "http://localhost:8080/" 등 처리
+     * 세션 체인 - /api/chat/** 포함 (Form 로그인, OAuth2)
+     * "http://localhost:8080/login", "http://localhost:8080/chat" 등 처리
      */
     @Bean
     @Order(2)
@@ -99,11 +94,13 @@ class SecurityConfiguration {
                                 "/h2-console/**",
                                 "/css/**",
                                 "/js/**",
-                                "/images/**"
+                                "/images/**",
+                                "/favicon.ico"
                         ).permitAll()
-                        .requestMatchers("/payment/checkout").authenticated()
-                        .requestMatchers("/payment/verify").authenticated()
-                        .requestMatchers("/mypage/password", "/payment/checkout", "/payment/verify").authenticated()
+                        // 채팅 페이지 + 채팅 API - 세션 로그인 필요
+                        .requestMatchers("/chat", "/api/chat/**").authenticated()
+                        .requestMatchers("/mypage/password",
+                                "/payment/checkout", "/payment/verify").authenticated()
                         .anyRequest().authenticated()
                 )
                 // Form 로그인
