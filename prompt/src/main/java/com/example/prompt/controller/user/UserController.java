@@ -89,6 +89,19 @@ public class UserController {
     }
 
     // 회원 탈퇴
+    @PostMapping("/mypage/withdraw")
+    public ResponseEntity<Map<String, Object>> withdrawSession(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            HttpServletRequest request) {
+        userService.withdraw(userDetails.getId());
+        HttpSession session = request.getSession(false);
+        if (session != null) {
+            session.invalidate();
+        }
+        return ResponseEntity.ok(Map.of("success", true, "message", "탈퇴가 완료되었습니다"));
+    }
+
+    // 회원 탈퇴
     @PostMapping("/api/mypage/withdraw")
     public ResponseEntity<Map<String, Object>> withdraw(
             @AuthenticationPrincipal CustomUserDetails userDetails) {

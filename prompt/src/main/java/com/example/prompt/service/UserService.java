@@ -12,6 +12,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -76,12 +78,26 @@ public class UserService {
         emailService.clearVerified(email);
     }
 
-    // 내 정보 조회
+    // 내 정보 조회 (만료 체크 포함)
     @Transactional(readOnly = true)
     public UserDto getMyInfo(Long userId) {
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다"));
         return UserDto.from(user);
+    }
+
+    // 플랜 만료 체크 및 다운그레이드
+    public void checkAndDowngradePlan(Long userId) {
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다"));
+
+        if (user.getPlanExpiredAt() != null && LocalDateTime.now().isAfter(user.getPlanExpiredAt())) {
+            PlanEntity normalPlan = planRepository.findByPlanName(DEFAULT_PLAN_NAME)
+                    .orElseThrow(() -> new IllegalStateException("기본 플랜이 존재하지 않습니다"));
+            user.setPlan(normalPlan);
+            user.setPlanExpiredAt(null);
+            log.info("플랜 만료 → NORMAL 다운그레이드 - userId: {}", userId);
+        }
     }
 
     // 비밀번호 변경 (마이페이지)

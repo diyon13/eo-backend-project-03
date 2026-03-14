@@ -56,6 +56,10 @@ public class UserEntity {
     @Column(name = "token_reset_at")
     private LocalDateTime tokenResetAt;
 
+    // 플랜 만료일 (결제일 + 30일, NORMAL 플랜은 null)
+    @Column(name = "plan_expired_at")
+    private LocalDateTime planExpiredAt;
+
     // 활성여부 - 탈퇴시 false
     @Column(columnDefinition = "BOOLEAN DEFAULT TRUE")
     @Builder.Default
