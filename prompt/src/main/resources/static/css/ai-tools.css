@@ -1,6 +1,3 @@
-/* ai-tools.css - AI 도구 전용 스타일 (공통 사이드바는 ai-common.css 참조) */
-
-/* 이력 타입 뱃지 */
 .historyBadge {
     display: inline-block;
     font-size: 10px;
