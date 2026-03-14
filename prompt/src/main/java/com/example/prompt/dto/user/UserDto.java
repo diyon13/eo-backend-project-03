@@ -23,6 +23,12 @@ public class UserDto {
     private Long planId;
     private String planName;
 
+    // 플랜 만료일
+    private LocalDateTime planExpiredAt;
+
+    // 플랜 남은 일수 (NORMAL이면 null)
+    private Long daysLeft;
+
     @NotBlank(message = "아이디를 입력해주세요")
     @Size(min = 4, max = 50, message = "아이디는 4~50자 이내로 입력해주세요")
     private String userid;
@@ -44,6 +50,9 @@ public class UserDto {
     @NotBlank(message = "이메일을 입력해주세요")
     @Email(message = "이메일 형식을 다시 확인해주세요")
     private String email;
+
+    // 소셜 로그인 제공자 (google 등, 일반 로그인이면 null)
+    private String provider;
 
     // 사용 토큰량 (ERD: used_token)
     @Builder.Default
@@ -76,14 +85,25 @@ public class UserDto {
 
         PlanEntity plan = userEntity.getPlan();
 
+        // 남은 일수 계산 (NORMAL이면 null)
+        Long daysLeft = null;
+        if (userEntity.getPlanExpiredAt() != null) {
+            daysLeft = java.time.temporal.ChronoUnit.DAYS.between(
+                    LocalDateTime.now(), userEntity.getPlanExpiredAt());
+            if (daysLeft < 0) daysLeft = 0L;
+        }
+
         return UserDto.builder()
                 .id(userEntity.getId())
                 .planId(plan != null ? plan.getPlanId() : null)
                 .planName(plan != null ? plan.getPlanName() : null)
+                .planExpiredAt(userEntity.getPlanExpiredAt())
+                .daysLeft(daysLeft)
                 .userid(userEntity.getUserid())
                 .username(userEntity.getUsername())
                 .password(userEntity.getPassword())
                 .email(userEntity.getEmail())
+                .provider(userEntity.getProvider())
                 .usedToken(userEntity.getUsedToken())
                 .tokenResetAt(userEntity.getTokenResetAt())
                 .active(userEntity.isActive())

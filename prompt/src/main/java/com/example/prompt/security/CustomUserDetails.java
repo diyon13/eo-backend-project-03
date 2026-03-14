@@ -17,6 +17,7 @@ public class CustomUserDetails implements UserDetails {
     private final String password;
     private final boolean active;
     private final boolean locked;
+    private final boolean oauth2User;
 
     public CustomUserDetails(UserEntity user){
         this.id = user.getId();
@@ -24,11 +25,11 @@ public class CustomUserDetails implements UserDetails {
         this.password = user.getPassword();
         this.active = user.isActive();
         this.locked = user.isLocked();
+        this.oauth2User = user.getProvider() != null;
     }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        //플랜이 역할을 대신 > Role_user 고정
         return List.of(new SimpleGrantedAuthority("ROLE_USER"));
     }
 

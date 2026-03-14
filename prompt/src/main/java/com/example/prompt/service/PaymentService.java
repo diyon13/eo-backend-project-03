@@ -51,27 +51,31 @@ public class PaymentService {
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime expiredAt = now.plusDays(30);
+
         // 결제 내역 저장
         PaymentEntity paymentEntity = PaymentEntity.builder()
                 .user(user)
                 .plan(plan)
                 .impUid(dto.getImpUid())
                 .amount(dto.getAmount())
-                .paidAt(LocalDateTime.now())
+                .paidAt(now)
                 .build();
         paymentRepository.save(paymentEntity);
         log.info("결제 내역 저장 완료 - paymentId: {}", paymentEntity.getPaymentId());
 
-        // 사용자 플랜 업그레이드
+        // 사용자 플랜 업그레이드 + 만료일 저장
         user.setPlan(plan);
+        user.setPlanExpiredAt(expiredAt);
         userRepository.save(user);
-        log.info("플랜 업그레이드 완료 - userId: {}, planName: {}", userId, plan.getPlanName());
+        log.info("플랜 업그레이드 완료 - userId: {}, planName: {}, expiredAt: {}", userId, plan.getPlanName(), expiredAt);
 
         return PaymentDto.builder()
                 .impUid(dto.getImpUid())
                 .planName(plan.getPlanName())
                 .amount(dto.getAmount())
-                .paidAt(LocalDateTime.now())
+                .paidAt(now)
                 .success(true)
                 .message(plan.getPlanName() + " 플랜으로 업그레이드 되었습니다.")
                 .build();

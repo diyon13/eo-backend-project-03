@@ -25,7 +25,8 @@
             <!-- 사이드바 -->
             <nav id="mypage-sidebar">
                 <button class="mypage-menu active" data-tab="info">내 정보</button>
-                <button class="mypage-menu" data-tab="password">비밀번호 변경</button>
+                <button class="mypage-menu" data-tab="password"
+                        th:if="${myInfo == null or myInfo.provider == null}">비밀번호 변경</button>
                 <button class="mypage-menu withdraw-menu" data-tab="withdraw">회원 탈퇴</button>
             </nav>
 
@@ -54,10 +55,24 @@
                             <a href="/payment" class="plan-upgrade-btn">플랜 업그레이드</a>
                         </div>
                     </div>
+
+                    <!-- 다음 결제일 (NORMAL이 아닐 때만 표시) -->
+                    <div id="plan-expire-group" class="info-group"
+                         th:if="${myInfo != null and myInfo.planExpiredAt != null}">
+                        <span class="info-label">다음 결제일</span>
+                        <div id="plan-expire-wrap">
+                            <span class="info-value"
+                                  th:text="${#temporals.format(myInfo.planExpiredAt, 'yyyy년 MM월 dd일')}"></span>
+                            <span id="plan-days-left"
+                                  th:classappend="${myInfo.daysLeft <= 7 ? ' urgent' : ''}"
+                                  th:text="${myInfo.daysLeft > 0 ? myInfo.daysLeft + '일 남음' : '오늘 만료'}"></span>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- 비밀번호 변경 탭 -->
-                <div class="mypage-tab" id="tab-password">
+                <div class="mypage-tab" id="tab-password"
+                     th:if="${myInfo == null or myInfo.provider == null}">
                     <h3>비밀번호 변경</h3>
                     <div class="form-group">
                         <label for="current-password">현재 비밀번호</label>

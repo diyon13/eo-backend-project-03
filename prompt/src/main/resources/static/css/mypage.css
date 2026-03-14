@@ -422,3 +422,29 @@
     cursor: not-allowed;
     transform: none;
 }
+/* 플랜 만료일 */
+#plan-expire-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex: 1;
+}
+
+#plan-days-left {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    padding: 0.25rem 0.625rem;
+    border-radius: 999px;
+    background: var(--accent-light);
+    color: var(--accent);
+}
+
+#plan-days-left.urgent {
+    background: #fff0f0;
+    color: #c0392b;
+}
+
+[data-theme="dark"] #plan-days-left.urgent {
+    background: #2a1a1a;
+    color: #e07070;
+}

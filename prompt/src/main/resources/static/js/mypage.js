@@ -21,13 +21,12 @@ window.addEventListener('DOMContentLoaded', function () {
     }
 
     // 마이페이지 버튼 클릭
-    const mypageBtn = document.getElementById('mypage-btn');
-    if (mypageBtn) {
-        mypageBtn.addEventListener('click', function (e) {
+    document.querySelectorAll('#mypage-btn, .mypage-open-btn').forEach(btn => {
+        btn.addEventListener('click', function (e) {
             e.preventDefault();
             openModal();
         });
-    }
+    });
 
     // 닫기 버튼
     if (closeBtn) {

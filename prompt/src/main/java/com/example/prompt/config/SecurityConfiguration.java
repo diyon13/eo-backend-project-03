@@ -34,13 +34,11 @@ class SecurityConfiguration {
 
     /**
      * JWT 체인 - /api/chat/** 제외 (세션 체인에서 처리)
-     * "http://localhost:8080/api/..." 요청 처리
      */
     @Bean
     @Order(1)
     public SecurityFilterChain apiSecurityFilterChain(HttpSecurity http) throws Exception {
         http
-                // /api/chat/** 는 Order(2) 세션 체인에서 처리
                 .securityMatcher("/api/users/**", "/api/email/**", "/api/admin/**",
                         "/api/user/**", "/api/payment/**", "/api/alan/**", "/api/stats/**")
                 .httpBasic(AbstractHttpConfigurer::disable)
@@ -76,8 +74,7 @@ class SecurityConfiguration {
     }
 
     /**
-     * 세션 체인 - /api/chat/** 포함 (Form 로그인, OAuth2)
-     * "http://localhost:8080/login", "http://localhost:8080/chat" 등 처리
+     * 세션 체인 - Form 로그인, OAuth2
      */
     @Bean
     @Order(2)
@@ -97,13 +94,15 @@ class SecurityConfiguration {
                                 "/images/**",
                                 "/favicon.ico"
                         ).permitAll()
-                        // 채팅 페이지 + 채팅 API - 세션 로그인 필요
                         .requestMatchers("/chat", "/api/chat/**").authenticated()
-                        .requestMatchers("/mypage/password",
-                                "/payment/checkout", "/payment/verify").authenticated()
+                        .requestMatchers(
+                                "/mypage/password",
+                                "/mypage/withdraw",
+                                "/payment/checkout",
+                                "/payment/verify"
+                        ).authenticated()
                         .anyRequest().authenticated()
                 )
-                // Form 로그인
                 .formLogin(form -> form
                         .loginPage("/login")
                         .loginProcessingUrl("/login")
@@ -113,13 +112,11 @@ class SecurityConfiguration {
                         .failureUrl("/login?error=true")
                         .permitAll()
                 )
-                // OAuth2 구글 로그인
                 .oauth2Login(oauth -> oauth
                         .loginPage("/login")
                         .userInfoEndpoint(ui -> ui.userService(oAuth2UserService))
                         .defaultSuccessUrl("/", true)
                 )
-                // 로그아웃
                 .logout(logout -> logout
                         .logoutUrl("/logout")
                         .logoutSuccessUrl("/")
