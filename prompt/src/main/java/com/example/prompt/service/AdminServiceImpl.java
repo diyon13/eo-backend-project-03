@@ -10,12 +10,16 @@ import com.example.prompt.security.jwt.JwtProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -233,6 +237,7 @@ public class AdminServiceImpl implements AdminService {
      * 관리자 회원 검색 + 페이징 조회
      */
     @Override
+    @Transactional(readOnly = true)
     public Page<AdminUserDto> searchUsers(String keyword, Pageable pageable) {
 
         log.info("관리자 회원 검색 + 페이징 조회 요청 - keyword={}, page={}, size={}",
@@ -320,4 +325,103 @@ public class AdminServiceImpl implements AdminService {
 
         return logs.map(AdminActionLogDto::from);
     }
+
+    /**
+     * 관리자 통계 페이지 데이터 조회
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public AdminStatsDto getStats(String periodType, String startDate, String endDate, String planType, int page) {
+
+        log.info("관리자 통계 조회 요청 - periodType={}, startDate={}, endDate={}, planType={}, page={}",
+                periodType, startDate, endDate, planType, page);
+
+        // 전체 채팅방 수
+        long totalChatRooms = chatRoomRepository.count();
+
+        // 전체 채팅 수
+        long totalChats = 0;
+
+        long totalImages = 0;
+        long totalFiles = 0;
+        long totalUsedTokens = userRepository.findAll()
+                .stream()
+                .mapToLong(UserEntity::getUsedToken)
+                .sum();
+
+        List<AdminStatsDto.PlanStat> planStats = new ArrayList<>();
+
+        long normalUserCount = userRepository.countByPlan_PlanName("NORMAL");
+        long proUserCount = userRepository.countByPlan_PlanName("PRO");
+        long maxUserCount = userRepository.countByPlan_PlanName("MAX");
+
+        planStats.add(AdminStatsDto.PlanStat.builder()
+                .planName("NORMAL")
+                .userCount(normalUserCount)
+                .chatRoomCount(0)
+                .chatCount(0)
+                .imageCount(0)
+                .fileCount(0)
+                .usedTokens(0)
+                .build());
+
+        planStats.add(AdminStatsDto.PlanStat.builder()
+                .planName("PRO")
+                .userCount(proUserCount)
+                .chatRoomCount(0)
+                .chatCount(0)
+                .imageCount(0)
+                .fileCount(0)
+                .usedTokens(0)
+                .build());
+
+        planStats.add(AdminStatsDto.PlanStat.builder()
+                .planName("MAX")
+                .userCount(maxUserCount)
+                .chatRoomCount(0)
+                .chatCount(0)
+                .imageCount(0)
+                .fileCount(0)
+                .usedTokens(0)
+                .build());
+
+        Pageable pageable = PageRequest.of(page, 10);
+
+        List<AdminStatsDto.PeriodStat> periodStats = new ArrayList<>();
+
+        periodStats.add(AdminStatsDto.PeriodStat.builder()
+                .statDate(LocalDate.now().toString())
+                .signupCount(userRepository.countByCreatedAtBetween(
+                        LocalDate.now().atStartOfDay(),
+                        LocalDate.now().plusDays(1).atStartOfDay()
+                ))
+                .chatRoomCount(0)
+                .chatCount(0)
+                .imageCount(0)
+                .fileCount(0)
+                .usedTokens(0)
+                .build());
+
+        Page<AdminStatsDto.PeriodStat> statsPage =
+                new PageImpl<>(periodStats, pageable, periodStats.size());
+
+        AdminStatsDto stats = AdminStatsDto.builder()
+                .periodType(periodType)
+                .startDate(startDate)
+                .endDate(endDate)
+                .planType(planType)
+                .totalChatRooms(totalChatRooms)
+                .totalChats(totalChats)
+                .totalImages(totalImages)
+                .totalFiles(totalFiles)
+                .totalUsedTokens(totalUsedTokens)
+                .planStats(planStats)
+                .statsPage(statsPage)
+                .build();
+
+        log.info("관리자 통계 조회 성공 - totalChatRooms={}, totalUsedTokens={}", totalChatRooms, totalUsedTokens);
+
+        return stats;
+    }
+
 }

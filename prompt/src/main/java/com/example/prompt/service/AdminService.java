@@ -46,7 +46,7 @@ public interface AdminService {
     /**
      * 회원 비활성 처리
      */
-    void deactivateUser(String adminId, Long userId);;
+    void deactivateUser(String adminId, Long userId);
 
     /**
      * 관리자 회원 검색 / 페이징
@@ -62,4 +62,9 @@ public interface AdminService {
      * 관리자 처리 이력
      */
     Page<AdminActionLogDto> getAdminActionLogs(Pageable pageable);
+
+    /**
+     * 관리자 통계 페이지 데이터 조회
+     */
+    AdminStatsDto getStats(String periodType, String startDate, String endDate, String planType, int page);
 }

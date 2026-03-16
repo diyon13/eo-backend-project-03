@@ -32,7 +32,7 @@ public class AdminUserDto {
     private LocalDateTime createdAt;
 
     /**
-     * USerEntity -> AdminUserDtop 변환
+     * USerEntity -> AdminUserDto 변환
      */
     public static AdminUserDto from(UserEntity user) {
         return AdminUserDto.builder()
@@ -40,7 +40,7 @@ public class AdminUserDto {
                 .userid(user.getUserid())
                 .username(user.getUsername())
                 .email(user.getEmail())
-                .planName(user.getPlan().getPlanName())
+                .planName(user.getPlan() != null ? user.getPlan().getPlanName() : null)
                 .active(user.isActive())
                 .locked(user.isLocked())
                 .createdAt(user.getCreatedAt())
