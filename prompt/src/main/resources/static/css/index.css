@@ -248,3 +248,7 @@
         grid-template-columns: 1fr;
     }
 }
+/* 로그아웃 폼 인라인 */
+#logout-form {
+    display: inline;
+}

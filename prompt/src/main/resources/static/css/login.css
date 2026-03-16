@@ -1,5 +1,4 @@
-
- /* Login  #login */
+/* Login  #login */
 
 #login {
     min-height: 100vh;
@@ -201,4 +200,8 @@
     #login > div {
         max-width: 100%;
     }
+}
+/* 로그아웃 폼 인라인 */
+#logout-form {
+    display: inline;
 }

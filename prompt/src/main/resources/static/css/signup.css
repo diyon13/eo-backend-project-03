@@ -278,3 +278,13 @@
         max-width: 100%;
     }
 }
+/* 기본 숨김 처리 */
+#verify-group,
+#signup-error {
+    display: none;
+}
+
+/* 로그아웃 폼 인라인 */
+#logout-form {
+    display: inline;
+}
