@@ -241,6 +241,13 @@
 [data-theme="dark"] .field-msg.success { color: #5dbb7a; }
 [data-theme="dark"] .field-msg.error   { color: #e07070; }
 
+/* 에러/성공 메시지 기본 숨김 */
+#password-error,
+#password-success,
+#withdraw-error {
+    display: none;
+}
+
 /* 에러/성공 메시지 박스 */
 #password-error,
 #password-success {
