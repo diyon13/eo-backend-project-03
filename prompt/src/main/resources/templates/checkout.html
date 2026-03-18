@@ -27,7 +27,7 @@
             <button id="dark-toggle" aria-label="다크모드 토글"></button>
             <th:block sec:authorize="isAuthenticated()">
                 <button type="button" id="mypage-btn" class="nav-mypage-btn">마이페이지</button>
-                <form th:action="@{/logout}" method="post" style="display:inline;">
+                <form th:action="@{/logout}" method="post" id="logout-form">
                     <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                     <button type="submit" class="nav-logout-btn">로그아웃</button>
                 </form>
@@ -97,7 +97,7 @@
         </div>
 
         <!-- 에러 메시지 -->
-        <div id="checkout-error" style="display:none;">
+        <div id="checkout-error">
             <span id="checkout-error-msg"></span>
         </div>
 

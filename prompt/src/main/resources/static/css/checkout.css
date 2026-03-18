@@ -208,3 +208,12 @@
         max-width: 100%;
     }
 }
+/* 로그아웃 폼 인라인 */
+#logout-form {
+    display: inline;
+}
+
+/* 기본 숨김 */
+#checkout-error {
+    display: none;
+}

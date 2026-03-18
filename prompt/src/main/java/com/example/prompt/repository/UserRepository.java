@@ -4,9 +4,9 @@ import com.example.prompt.domain.UserEntity;
 import org.springframework.data.jpa.domain.AbstractPersistable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.repository.Repository;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -38,13 +38,7 @@ public interface UserRepository extends JpaRepository<UserEntity, Long> {
     // 오늘 가입자 수
     long countByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
 
-    // 관리자 회원 목록 전체 조회
-    @Override
-    @EntityGraph(attributePaths = "plan")
-    Page<UserEntity> findAll(Pageable pageable);
-
     // 검색 기능 + 페이징 처리
-    @EntityGraph(attributePaths = "plan")
     Page<UserEntity> findByUseridContainingOrEmailContaining(
             String userid,
             String email,
