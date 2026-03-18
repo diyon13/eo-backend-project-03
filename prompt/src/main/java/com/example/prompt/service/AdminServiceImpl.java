@@ -15,6 +15,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.example.prompt.dto.common.enums.AdminUserActionType;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -132,6 +133,7 @@ public class AdminServiceImpl implements AdminService {
     /**
      * 관리자 회원 상세 조회
      */
+    @Transactional(readOnly = true)
     @Override
     public AdminUserDetailDto getUserDetail(Long userId) {
 
@@ -238,23 +240,19 @@ public class AdminServiceImpl implements AdminService {
      */
     @Override
     @Transactional(readOnly = true)
-    public Page<AdminUserDto> searchUsers(String keyword, Pageable pageable) {
+    public Page<AdminUserDto> searchUsers(String keyword, String plan, String status, Pageable pageable) {
 
-        log.info("관리자 회원 검색 + 페이징 조회 요청 - keyword={}, page={}, size={}",
-                keyword, pageable.getPageNumber(), pageable.getPageSize());
+        log.info("관리자 회원 검색 + 페이징 조회 요청 - keyword={}, plan={}, status={}, page={}, size={}",
+                keyword, plan, status, pageable.getPageNumber(), pageable.getPageSize());
 
-        Page<UserEntity> users;
+        Page<UserEntity> users = userRepository.searchUsers(
+                keyword == null ? "" : keyword,
+                plan == null ? "" : plan,
+                status == null ? "" : status,
+                pageable
+        );
 
-        if (keyword == null || keyword.isBlank()) {
-            users = userRepository.findAll(pageable);
-        } else {
-            users = userRepository.findByUseridContainingOrEmailContaining(
-                    keyword, keyword, pageable
-            );
-        }
-
-        log.info("관리자 회원 검색 + 페이징 조회 성공 - totalElements={}",
-                users.getTotalElements());
+        log.info("관리자 회원 검색 + 페이징 조회 성공 - totalElements={}", users.getTotalElements());
 
         return users.map(AdminUserDto::from);
     }
@@ -424,4 +422,39 @@ public class AdminServiceImpl implements AdminService {
         return stats;
     }
 
+    @Override
+    @Transactional
+    public void changeUserStatus(String adminId, Long userId, AdminDto.ChangeStatusRequest request) {
+
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("회원을 찾을 수 없습니다."));
+
+        AdminUserActionType action = request.getAction();
+
+        switch (action) {
+            case LOCK -> user.setLocked(true);
+
+            case UNLOCK -> user.setLocked(false);
+
+            case ACTIVATE, RESTORE -> {
+                user.setActive(true);
+                user.setLocked(false);
+            }
+
+            case INACTIVE, WITHDRAW -> user.setActive(false);
+        }
+
+        // 상태 변경 시간 (있으면)
+        user.setUpdatedAt(LocalDateTime.now());
+
+        // 관리자 로그
+        adminActionLogRepository.save(
+                AdminActionLogEntity.builder()
+                        .adminId(adminId)
+                        .targetUserId(userId)
+                        .actionType(action.name())
+                        .description("회원 상태 변경")
+                        .build()
+        );
+    }
 }

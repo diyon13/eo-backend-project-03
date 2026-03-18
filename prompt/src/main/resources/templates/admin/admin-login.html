@@ -12,7 +12,7 @@
     <div>
         <h1>PROMPT 관리자 로그인</h1>
 
-        <form id="admin-login-form" method="post" action="/admin/login">
+        <form id="admin-login-form" th:action="@{/admin/login}" method="post">
             <div class="form-group">
                 <label for="adminId">관리자 아이디</label>
                 <input type="text" id="adminId" name="adminId" placeholder="관리자 아이디를 입력하세요">
@@ -22,6 +22,10 @@
                 <label for="password">비밀번호</label>
                 <input type="password" id="password" name="password" placeholder="비밀번호를 입력하세요">
             </div>
+
+            <input type="hidden"
+                   th:name="${_csrf.parameterName}"
+                   th:value="${_csrf.token}">
 
             <button type="submit" id="admin-login-btn">로그인</button>
         </form>

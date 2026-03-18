@@ -32,29 +32,31 @@
                 <div id="search-grid">
                     <div class="form-group">
                         <label for="admin-id">관리자 아이디</label>
-                        <input type="text" id="admin-id" name="adminId" placeholder="관리자 아이디를 입력하세요">
+                        <input type="text" id="admin-id" name="adminId"
+                               th:value="${adminId}"
+                               placeholder="관리자 아이디를 입력하세요">
                     </div>
 
                     <div class="form-group">
                         <label for="action-type">처리 유형</label>
                         <select id="action-type" name="actionType">
-                            <option value="">전체</option>
-                            <option value="LOCK">잠금 처리</option>
-                            <option value="UNLOCK">잠금 해제</option>
-                            <option value="DELETE">탈퇴 처리</option>
-                            <option value="RESTORE">복구 처리</option>
-                            <option value="PLAN_CHANGE">플랜 변경</option>
+                            <option value="" th:selected="${actionType == ''}">전체</option>
+                            <option value="LOCK" th:selected="${actionType == 'LOCK'}">잠금 처리</option>
+                            <option value="UNLOCK" th:selected="${actionType == 'UNLOCK'}">잠금 해제</option>
+                            <option value="DELETE" th:selected="${actionType == 'DELETE'}">탈퇴 처리</option>
+                            <option value="RESTORE" th:selected="${actionType == 'RESTORE'}">복구 처리</option>
+                            <option value="PLAN_CHANGE" th:selected="${actionType == 'PLAN_CHANGE'}">플랜 변경</option>
                         </select>
                     </div>
 
                     <div class="form-group">
                         <label for="start-date">시작일</label>
-                        <input type="date" id="start-date" name="startDate">
+                        <input type="date" id="start-date" name="startDate" th:value="${startDate}">
                     </div>
 
                     <div class="form-group">
                         <label for="end-date">종료일</label>
-                        <input type="date" id="end-date" name="endDate">
+                        <input type="date" id="end-date" name="endDate" th:value="${endDate}">
                     </div>
                 </div>
 
@@ -86,6 +88,10 @@
                         </tr>
                     </thead>
                     <tbody>
+                        <tr th:if="${logs.content.isEmpty()}">
+                            <td colspan="6">조회된 처리 이력이 없습니다.</td>
+                        </tr>
+
                         <tr th:each="log : ${logs.content}">
                             <td th:text="${log.logId}">1</td>
                             <td th:text="${log.adminId}">admin</td>
@@ -119,24 +125,26 @@
 
             <!-- 페이징 -->
             <div id="pagination">
-                <button class="page-btn"
-                        th:if="${logs.hasPrevious()}"
-                        th:onclick="'location.href=\'/admin/logs?page=' + ${logs.number - 1} + '\''">
+                <a class="page-btn"
+                   th:if="${logs.hasPrevious()}"
+                   th:href="@{/admin/logs(page=${logs.number - 1}, adminId=${adminId}, actionType=${actionType}, startDate=${startDate}, endDate=${endDate})}">
                     이전
-                </button>
+                </a>
 
-                <button class="page-btn"
-                        th:each="i : ${#numbers.sequence(0, logs.totalPages - 1)}"
-                        th:text="${i + 1}"
-                        th:classappend="${i == logs.number} ? ' active'"
-                        th:onclick="'location.href=\'/admin/logs?page=' + ${i} + '\''">
-                </button>
+                <th:block th:if="${logs.totalPages > 0}">
+                    <a class="page-btn"
+                       th:each="i : ${#numbers.sequence(0, logs.totalPages - 1)}"
+                       th:text="${i + 1}"
+                       th:classappend="${i == logs.number} ? ' active'"
+                       th:href="@{/admin/logs(page=${i}, adminId=${adminId}, actionType=${actionType}, startDate=${startDate}, endDate=${endDate})}">
+                    </a>
+                </th:block>
 
-                <button class="page-btn"
-                        th:if="${logs.hasNext()}"
-                        th:onclick="'location.href=\'/admin/logs?page=' + ${logs.number + 1} + '\''">
+                <a class="page-btn"
+                   th:if="${logs.hasNext()}"
+                   th:href="@{/admin/logs(page=${logs.number + 1}, adminId=${adminId}, actionType=${actionType}, startDate=${startDate}, endDate=${endDate})}">
                     다음
-                </button>
+                </a>
             </div>
         </div>
     </section>

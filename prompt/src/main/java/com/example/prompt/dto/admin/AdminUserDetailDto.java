@@ -1,5 +1,6 @@
 package com.example.prompt.dto.admin;
 
+import com.example.prompt.domain.PlanEntity;
 import com.example.prompt.domain.UserEntity;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -20,7 +21,7 @@ public class AdminUserDetailDto {
 
     private String userid;
 
-    private String username;
+    private String name;
 
     private String email;
 
@@ -43,25 +44,27 @@ public class AdminUserDetailDto {
     private LocalDateTime createdAt;
 
     /** 회원 정보 수정 일시 */
-    private LocalDateTime updatedAt;
+    private LocalDateTime statusUpdatedAt;
 
     /**
      * UserEntity → AdminUserDetailDto 변환
      */
     public static AdminUserDetailDto from(UserEntity user) {
+        PlanEntity plan = user.getPlan();
+
         return AdminUserDetailDto.builder()
                 .id(user.getId())
                 .userid(user.getUserid())
-                .username(user.getUsername())
+                .name(user.getUsername())
                 .email(user.getEmail())
-                .planId(user.getPlan().getPlanId())
-                .planName(user.getPlan().getPlanName())
+                .planId(plan != null ? plan.getPlanId() : null)
+                .planName(plan != null ? plan.getPlanName() : null)
                 .usedToken(user.getUsedToken())
                 .tokenResetAt(user.getTokenResetAt())
                 .active(user.isActive())
                 .locked(user.isLocked())
                 .createdAt(user.getCreatedAt())
-                .updatedAt(user.getUpdatedAt())
+                .statusUpdatedAt(user.getUpdatedAt())
                 .build();
     }
 }

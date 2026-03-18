@@ -3,10 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
     <title>PROMPT 관리자 - 사용자 관리</title>
     <link rel="stylesheet" th:href="@{/css/reset.css}">
     <link rel="stylesheet" th:href="@{/css/admin_common.css}">
     <link rel="stylesheet" th:href="@{/css/users.css}">
+    <script th:src="@{/js/users.js}"></script>
 </head>
 <body>
 
@@ -40,28 +43,28 @@
                         <div class="form-group">
                             <label for="plan">플랜</label>
                             <select id="plan" name="plan">
-                                <option value="">전체</option>
-                                <option value="NORMAL">NORMAL</option>
-                                <option value="PRO">PRO</option>
-                                <option value="MAX">MAX</option>
+                                <option value="" th:selected="${plan == ''}">전체</option>
+                                <option value="NORMAL" th:selected="${plan == 'NORMAL'}">NORMAL</option>
+                                <option value="PRO" th:selected="${plan == 'PRO'}">PRO</option>
+                                <option value="MAX" th:selected="${plan == 'MAX'}">MAX</option>
                             </select>
                         </div>
 
                         <div class="form-group">
                             <label for="status">상태</label>
                             <select id="status" name="status">
-                                <option value="">전체</option>
-                                <option value="ACTIVE">활성</option>
-                                <option value="LOCKED">잠금</option>
-                                <option value="DELETED">탈퇴</option>
+                                <option value="" th:selected="${status == ''}">전체</option>
+                                <option value="ACTIVE" th:selected="${status == 'ACTIVE'}">활성</option>
+                                <option value="LOCKED" th:selected="${status == 'LOCKED'}">잠금</option>
+                                <option value="DELETED" th:selected="${status == 'DELETED'}">탈퇴</option>
                             </select>
                         </div>
 
                         <div class="form-group">
                             <label for="sort">정렬</label>
                             <select id="sort" name="sort">
-                                <option value="latest">최신 가입순</option>
-                                <option value="oldest">오래된 가입순</option>
+                                <option value="latest" th:selected="${sort == 'latest'}">최신 가입순</option>
+                                <option value="oldest" th:selected="${sort == 'oldest'}">오래된 가입순</option>
                             </select>
                         </div>
                     </div>
@@ -115,24 +118,17 @@
 
                                 <td>
                                     <div class="action-buttons">
-                                        <button type="button" class="btn-action detail-btn"
-                                                th:onclick="'location.href=\'/admin/users/' + ${user.id} + '\''">
+                                        <button type="button"
+                                                class="btn-action detail-btn"
+                                                th:attr="data-user-id=${user.id}">
                                             상세
                                         </button>
 
-                                        <button type="button" class="btn-action lock-btn"
-                                                th:if="${user.active and !user.locked}">
+                                        <button type="button"
+                                                th:class="'btn-action status-toggle-btn ' + (${user.locked} ? 'unlock-btn' : (${!user.active} ? 'restore-btn' : 'lock-btn'))"
+                                                th:attr="data-user-id=${user.id},data-action=${user.locked} ? 'UNLOCK' : (${!user.active} ? 'RESTORE' : 'LOCK')"
+                                                th:text="${user.locked} ? '잠금해제' : (${!user.active} ? '활성화' : '잠금')">
                                             잠금
-                                        </button>
-
-                                        <button type="button" class="btn-action active-btn"
-                                                th:if="${user.locked}">
-                                            활성화
-                                        </button>
-
-                                        <button type="button" class="btn-action restore-btn"
-                                                th:if="${!user.active}">
-                                            복구
                                         </button>
                                     </div>
                                 </td>
@@ -143,30 +139,172 @@
 
                 <!-- 페이징 -->
                 <div id="pagination">
-                    <button type="button" class="page-btn"
-                            th:if="${users.hasPrevious()}"
-                            th:onclick="'location.href=\'/admin/users?page=' + ${users.number - 1} + '&keyword=' + ${keyword} + '\''">
+                    <a class="page-btn"
+                       th:if="${users.hasPrevious()}"
+                       th:href="@{/admin/users(page=${users.number - 1}, keyword=${keyword}, plan=${plan}, status=${status}, sort=${sort})}">
                         이전
-                    </button>
+                    </a>
 
                     <th:block th:if="${users.totalPages > 0}">
-                        <button type="button" class="page-btn"
-                                th:each="i : ${#numbers.sequence(0, users.totalPages - 1)}"
-                                th:text="${i + 1}"
-                                th:classappend="${i == users.number} ? ' active'"
-                                th:onclick="'location.href=\'/admin/users?page=' + ${i} + '&keyword=' + ${keyword} + '\''">
+                        <a class="page-btn"
+                           th:each="i : ${#numbers.sequence(0, users.totalPages - 1)}"
+                           th:text="${i + 1}"
+                           th:classappend="${i == users.number} ? ' active'"
+                           th:href="@{/admin/users(page=${i}, keyword=${keyword}, plan=${plan}, status=${status}, sort=${sort})}">
                             1
-                        </button>
+                        </a>
                     </th:block>
 
-                    <button type="button" class="page-btn"
-                            th:if="${users.hasNext()}"
-                            th:onclick="'location.href=\'/admin/users?page=' + ${users.number + 1} + '&keyword=' + ${keyword} + '\''">
+                    <a class="page-btn"
+                       th:if="${users.hasNext()}"
+                       th:href="@{/admin/users(page=${users.number + 1}, keyword=${keyword}, plan=${plan}, status=${status}, sort=${sort})}">
                         다음
-                    </button>
+                    </a>
                 </div>
             </div>
         </section>
     </main>
+
+    <!-- 사용자 상세 오버레이 -->
+    <div id="user-detail-overlay">
+        <div id="user-detail-modal">
+            <div id="user-detail-header">
+                <h2>회원 상세 정보</h2>
+                <button type="button" id="overlay-close-btn">
+                    <span>닫기</span>
+                </button>
+            </div>
+
+            <div id="user-detail-body">
+                <!-- 회원 기본 정보 -->
+                <section class="detail-section">
+                    <h3>회원 기본 정보</h3>
+
+                    <input type="hidden" id="detail-target-user-id">
+
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <span class="detail-label">회원번호</span>
+                            <span class="detail-value" id="detail-user-id">1</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">아이디</span>
+                            <span class="detail-value" id="detail-user-userid">user01</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">이메일</span>
+                            <span class="detail-value" id="detail-user-email">user01@email.com</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">이름</span>
+                            <span class="detail-value" id="detail-user-name">홍길동</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">가입일</span>
+                            <span class="detail-value" id="detail-user-createdAt">2026-03-11</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">최근 로그인</span>
+                            <span class="detail-value" id="detail-user-last-login">2026-03-15</span>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 플랜 정보 -->
+                <section class="detail-section">
+                    <h3>플랜 정보</h3>
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <span class="detail-label">현재 플랜</span>
+                            <select id="detail-plan-select" name="detailPlan" class="detail-select">
+                                <option value="NORMAL" selected>NORMAL</option>
+                                <option value="PRO">PRO</option>
+                                <option value="MAX">MAX</option>
+                            </select>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">플랜 시작일</span>
+                            <span class="detail-value" id="detail-user-plan-start">2026-03-01</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">플랜 종료일</span>
+                            <span class="detail-value" id="detail-user-plan-end">2026-04-01</span>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 계정 상태 -->
+                <section class="detail-section">
+                    <h3>계정 상태</h3>
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <span class="detail-label">활성 상태</span>
+                            <span class="detail-value" id="detail-user-active">활성</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">잠금 상태</span>
+                            <span class="detail-value" id="detail-user-locked">정상</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">탈퇴 상태</span>
+                            <span class="detail-value" id="detail-user-deleted">정상</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">상태 변경일</span>
+                            <span class="detail-value" id="detail-user-status-updated">2026-03-15</span>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 활동 상세 -->
+                <section class="detail-section">
+                    <h3>활동 상세</h3>
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <span class="detail-label">생성한 채팅방 수</span>
+                            <span class="detail-value" id="detail-user-chatrooms">12</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">총 메시지 수</span>
+                            <span class="detail-value" id="detail-user-messages">248</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">이미지 생성 수</span>
+                            <span class="detail-value" id="detail-user-images">7</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">파일 업로드 수</span>
+                            <span class="detail-value" id="detail-user-files">3</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">최근 활동일</span>
+                            <span class="detail-value" id="detail-user-last-activity">2026-03-16</span>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 관리자 액션 -->
+                <section class="detail-section">
+                    <h3>관리자 액션</h3>
+                    <div id="detail-action-buttons">
+                        <button type="button" class="btn-action lock-btn" data-action="LOCK">
+                            잠금
+                        </button>
+                        <button type="button" class="btn-action inactive-btn" data-action="INACTIVE">
+                            비활성화
+                        </button>
+                        <button type="button" class="btn-action withdraw-btn" data-action="WITHDRAW">
+                            회원 탈퇴
+                        </button>
+                    </div>
+
+                    <div id="detail-footer">
+                        <button type="button" class="btn btn-secondary" id="detail-cancel-btn">취소</button>
+                        <button type="button" class="btn btn-primary" id="detail-save-btn">저장</button>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

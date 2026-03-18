@@ -107,8 +107,8 @@
                             </tr>
 
                             <tr th:each="user : ${recentUsers}">
-                                <td th:text="${user.userId}">확인 필요</td>
-                                <td th:text="${user.loginId}">확인 필요</td>
+                                <td th:text="${user.id}">확인 필요</td>
+                                <td th:text="${user.userid}">확인 필요</td>
                                 <td th:text="${user.planName}">확인 필요</td>
                                 <td th:text="${user.locked ? '잠금' : (user.active ? '활성' : '비활성')}">확인 필요</td>
                                 <td th:text="${#temporals.format(user.createdAt, 'yyyy-MM-dd')}">확인 필요</td>

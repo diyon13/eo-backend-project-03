@@ -201,18 +201,21 @@ body {
 }
 
 .lock-btn {
-    background-color: #fff1f0;
-    color: #d9363e;
+    background-color: #ef4444;
+    color: #ffffff;
+    border: 1px solid #ef4444;
 }
 
-.active-btn {
-    background-color: #e8f7ec;
-    color: #1f8b4c;
+.unlock-btn {
+    background-color: #10b981;
+    color: #ffffff;
+    border: 1px solid #10b981;
 }
 
 .restore-btn {
-    background-color: #eef4ff;
-    color: #2b6df8;
+    background-color: #3b82f6;
+    color: #ffffff;
+    border: 1px solid #3b82f6;
 }
 
 /* 페이징 */
@@ -279,4 +282,334 @@ body {
     .page-header > h1 {
         font-size: 24px;
     }
+}
+
+
+/*사용자 상세 오버레이*/
+#user-detail-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(15, 23, 42, 0.45);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    z-index: 99;
+}
+
+#user-detail-overlay.show {
+    display: flex;
+}
+
+#user-detail-modal {
+    width: 100%;
+    max-width: 920px;
+    max-height: 90vh;
+    overflow-y: auto;
+    background-color: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
+}
+
+/* 오버레이 헤더 */
+#user-detail-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px;
+    border-bottom: 1px solid #e5e7eb;
+    background-color: #fafafa;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+}
+
+#user-detail-header > h2 {
+    font-size: 20px;
+    font-weight: 700;
+    color: #222;
+}
+
+#overlay-close-btn {
+    padding: 0;
+    border: none;
+    background: none;
+
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background-color: #eef1f5;
+    color: #333;
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+#overlay-close-btn:hover {
+    background-color: #e5e7eb;
+}
+
+/* 오버레이 바디 */
+#user-detail-body {
+    padding: 24px;
+}
+
+/* 상세 섹션 */
+.detail-section {
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    background-color: #fff;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.detail-section:last-child {
+    margin-bottom: 0;
+}
+
+.detail-section > h3 {
+    font-size: 17px;
+    font-weight: 700;
+    color: #222;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #f0f1f3;
+}
+
+/* 상세 정보 그리드 */
+.detail-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+}
+
+.detail-item {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 14px 16px;
+    border: 1px solid #edf0f3;
+    border-radius: 10px;
+    background-color: #fafbfd;
+}
+
+.detail-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #666;
+}
+
+.detail-value {
+    font-size: 15px;
+    font-weight: 600;
+    color: #222;
+    word-break: break-word;
+}
+
+/* 계정 상태 값 강조용 */
+.detail-value.active-text {
+    color: #1f8b4c;
+}
+
+.detail-value.locked-text {
+    color: #d9363e;
+}
+
+.detail-value.deleted-text {
+    color: #666;
+}
+
+.detail-select {
+    height: 40px;
+    border: 1px solid #dcdfe6;
+    border-radius: 8px;
+    padding: 0 12px;
+    font-size: 14px;
+    color: #333;
+    background-color: #fff;
+}
+
+.detail-select:focus {
+    outline: none;
+    border-color: #2b6df8;
+}
+
+/* 관리자 액션 영역 */
+#detail-action-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+}
+
+/* 상세 모달 안 전용 버튼 */
+#detail-action-buttons > .btn-action {
+    min-width: 96px;
+    text-align: center;
+    font-weight: 600;
+}
+
+#detail-action-buttons > .btn-action.selected-action {
+    outline: 2px solid #4dabf7;
+}
+
+/* 비활성화 */
+.inactive-btn {
+    background-color: #f1f3f5;
+    color: #555;
+}
+
+/* 회원 탈퇴 (위험 버튼) */
+.withdraw-btn {
+    background-color: #ffe3e3;
+    color: #d9363e;
+    margin-left: auto;
+}
+
+/* 플랜 변경 박스 */
+#plan-change-box {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-left: 4px;
+    padding: 10px 12px;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    background-color: #fafafa;
+}
+
+#plan-change-box > label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #444;
+}
+
+#detail-plan-select {
+    height: 40px;
+    border: 1px solid #dcdfe6;
+    border-radius: 8px;
+    padding: 0 12px;
+    font-size: 14px;
+    color: #333;
+    background-color: #fff;
+}
+
+#detail-plan-select:focus {
+    outline: none;
+    border-color: #2b6df8;
+}
+
+/* 오버레이 스크롤바 약간 정리 */
+#user-detail-modal::-webkit-scrollbar {
+    width: 10px;
+}
+
+#user-detail-modal::-webkit-scrollbar-thumb {
+    background-color: #d9dde3;
+    border-radius: 999px;
+}
+
+#detail-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid #f0f1f3;
+}
+
+#plan-change-box {
+    margin-top: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+#plan-change-box > label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #444;
+}
+
+#plan-change-box > select {
+    min-width: 160px;
+}
+
+#user-detail-modal::-webkit-scrollbar-track {
+    background-color: transparent;
+}
+
+@media (max-width: 1024px) {
+    #user-detail-modal {
+        max-width: 760px;
+    }
+
+    .detail-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    #user-detail-overlay {
+        padding: 16px;
+    }
+
+    #user-detail-modal {
+        max-width: 100%;
+        max-height: 92vh;
+        border-radius: 14px;
+    }
+
+    #user-detail-header {
+        padding: 16px 18px;
+    }
+
+    #user-detail-header > h2 {
+        font-size: 18px;
+    }
+
+    #user-detail-body {
+        padding: 18px;
+    }
+
+    .detail-section {
+        padding: 16px;
+    }
+
+    .detail-grid {
+        grid-template-columns: 1fr;
+    }
+
+    #detail-action-buttons {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    #detail-action-buttons > .btn-action {
+        width: 100%;
+    }
+
+    #plan-change-box {
+        width: 100%;
+        margin-left: 0;
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    #detail-plan-select {
+        width: 100%;
+    }
+
+    #plan-change-box > .btn {
+        width: 100%;
+    }
+
+    .withdraw-btn {
+    margin-left: 0;
+}
 }

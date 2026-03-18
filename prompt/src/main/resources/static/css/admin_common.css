@@ -75,10 +75,15 @@ body {
     color: #333;
     text-decoration: none;
     font-size: 15px;
+    line-height: 1.4;
 }
 
-#sidebar > nav > ul > li.active > a,
 #sidebar > nav > ul > li > a:hover {
+    background-color: #e8f0ff;
+    color: #2b6df8;
+}
+
+#sidebar > nav > ul > li.active > a {
     background-color: #e8f0ff;
     color: #2b6df8;
     font-weight: 600;

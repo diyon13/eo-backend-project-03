@@ -1,9 +1,12 @@
 package com.example.prompt.dto.admin;
 
+import com.example.prompt.dto.common.enums.AdminUserActionType;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 public class AdminDto {
     @Getter
@@ -31,6 +34,16 @@ public class AdminDto {
     public static class MeResponse {
         private String adminId;
         private String name;
+    }
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ChangeStatusRequest {
+
+        @NotNull
+        private AdminUserActionType action;
     }
 
     @Getter

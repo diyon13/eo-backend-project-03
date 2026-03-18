@@ -199,7 +199,7 @@ body {
     cursor: pointer;
 }
 
-.active {
+#pagination .active {
     background-color: #2b6df8;
     border-color: #2b6df8;
     color: #fff;

@@ -51,7 +51,7 @@ public interface AdminService {
     /**
      * 관리자 회원 검색 / 페이징
      */
-    Page<AdminUserDto> searchUsers(String keyword, Pageable pageable);
+    Page<AdminUserDto> searchUsers(String keyword, String plan, String status, Pageable pageable);
 
     /**
      * 회원 플랜 변경
@@ -67,4 +67,6 @@ public interface AdminService {
      * 관리자 통계 페이지 데이터 조회
      */
     AdminStatsDto getStats(String periodType, String startDate, String endDate, String planType, int page);
+
+    void changeUserStatus(String adminId, Long userId, AdminDto.ChangeStatusRequest request);
 }

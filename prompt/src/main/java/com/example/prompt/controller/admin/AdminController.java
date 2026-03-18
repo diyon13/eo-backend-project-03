@@ -38,9 +38,11 @@ public class AdminController {
     @GetMapping("/api/users")
     public ApiResponse<Page<AdminUserDto>> getUsers(
             @RequestParam(required = false, defaultValue = "") String keyword,
+            @RequestParam(required = false, defaultValue = "") String plan,
+            @RequestParam(required = false, defaultValue = "") String status,
             Pageable pageable
     ) {
-        return ApiResponse.ok(adminService.searchUsers(keyword, pageable));
+        return ApiResponse.ok(adminService.searchUsers(keyword, plan, status, pageable));
     }
 
     /**
@@ -112,6 +114,21 @@ public class AdminController {
     }
 
     /**
+     * 회원 상태 변경
+     */
+    @ResponseBody
+    @PatchMapping("/api/users/{userId}/status")
+    public ApiResponse<Void> changeUserStatus(
+            Authentication authentication,
+            @PathVariable Long userId,
+            @Valid @RequestBody AdminDto.ChangeStatusRequest request
+    ) {
+        String adminId = authentication.getName();
+        adminService.changeUserStatus(adminId, userId, request);
+        return ApiResponse.ok(null);
+    }
+
+    /**
      * 관리자 처리 이력 조회
      */
     @ResponseBody
@@ -131,6 +148,8 @@ public class AdminController {
         model.addAttribute(
                 "recentUsers",
                 adminService.searchUsers(
+                        "",
+                        "",
                         "",
                         PageRequest.of(0, 5, Sort.by(Sort.Direction.DESC, "createdAt"))
                 ).getContent()
@@ -165,7 +184,7 @@ public class AdminController {
 
         Pageable pageable = PageRequest.of(page, 10, sortOption);
 
-        Page<AdminUserDto> users = adminService.searchUsers(keyword, pageable);
+        Page<AdminUserDto> users = adminService.searchUsers(keyword, plan, status, pageable);
 
         model.addAttribute("users", users);
         model.addAttribute("keyword", keyword);
