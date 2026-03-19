@@ -3,10 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
     <title>PROMPT 관리자 - 플랜/정책</title>
     <link rel="stylesheet" th:href="@{/css/reset.css}">
     <link rel="stylesheet" th:href="@{/css/admin_common.css}">
     <link rel="stylesheet" th:href="@{/css/policies.css}">
+    <script th:src="@{/js/policies.js}"></script>
 </head>
 <body>
 
@@ -45,109 +48,55 @@
             </div>
         </section>
 
-        <!-- 플랜 카드 -->
         <section id="plan-grid">
-            <section class="panel plan-card">
+            <section class="panel plan-card" th:each="plan : ${plans}">
                 <div class="panel-header">
-                    <h2>NORMAL 플랜</h2>
+                    <h2 th:text="${plan.planName + ' 플랜'}">NORMAL 플랜</h2>
                 </div>
 
                 <div class="panel-body">
                     <ul class="policy-list">
                         <li>
                             <span class="label">일일 채팅 제한</span>
-                            <span class="value">20회</span>
+                            <span class="value"
+                                  th:text="${plan.dailyChatLimit == -1 ? '무제한' : plan.dailyChatLimit + '회'}">20회</span>
                         </li>
                         <li>
                             <span class="label">이미지 업로드 제한</span>
-                            <span class="value">5개</span>
+                            <span class="value" th:text="${plan.imageUploadLimit + '개'}">5개</span>
                         </li>
                         <li>
                             <span class="label">파일 업로드 제한</span>
-                            <span class="value">3개</span>
+                            <span class="value" th:text="${plan.fileUploadLimit + '개'}">3개</span>
                         </li>
                         <li>
                             <span class="label">파일 최대 용량</span>
-                            <span class="value">10MB</span>
+                            <span class="value" th:text="${plan.fileSizeLimit + 'MB'}">10MB</span>
                         </li>
                         <li>
                             <span class="label">월간 토큰 한도</span>
-                            <span class="value">50,000</span>
+                            <span class="value" th:text="${#numbers.formatInteger(plan.tokenLimit, 0, 'COMMA')}">50,000</span>
+                        </li>
+                        <li>
+                            <span class="label">가격</span>
+                            <span class="value"
+                                  th:text="${plan.price == 0 ? '무료' : #numbers.formatInteger(plan.price, 0, 'COMMA') + '원'}">0원</span>
                         </li>
                     </ul>
 
                     <div class="button-area">
-                        <button type="button" class="btn btn-edit">수정</button>
-                    </div>
-                </div>
-            </section>
-
-            <section class="panel plan-card">
-                <div class="panel-header">
-                    <h2>PRO 플랜</h2>
-                </div>
-
-                <div class="panel-body">
-                    <ul class="policy-list">
-                        <li>
-                            <span class="label">일일 채팅 제한</span>
-                            <span class="value">100회</span>
-                        </li>
-                        <li>
-                            <span class="label">이미지 업로드 제한</span>
-                            <span class="value">20개</span>
-                        </li>
-                        <li>
-                            <span class="label">파일 업로드 제한</span>
-                            <span class="value">10개</span>
-                        </li>
-                        <li>
-                            <span class="label">파일 최대 용량</span>
-                            <span class="value">50MB</span>
-                        </li>
-                        <li>
-                            <span class="label">월간 토큰 한도</span>
-                            <span class="value">300,000</span>
-                        </li>
-                    </ul>
-
-                    <div class="button-area">
-                        <button type="button" class="btn btn-edit">수정</button>
-                    </div>
-                </div>
-            </section>
-
-            <section class="panel plan-card">
-                <div class="panel-header">
-                    <h2>MAX 플랜</h2>
-                </div>
-
-                <div class="panel-body">
-                    <ul class="policy-list">
-                        <li>
-                            <span class="label">일일 채팅 제한</span>
-                            <span class="value">무제한</span>
-                        </li>
-                        <li>
-                            <span class="label">이미지 업로드 제한</span>
-                            <span class="value">50개</span>
-                        </li>
-                        <li>
-                            <span class="label">파일 업로드 제한</span>
-                            <span class="value">30개</span>
-                        </li>
-                        <li>
-                            <span class="label">파일 최대 용량</span>
-                            <span class="value">100MB</span>
-                        </li>
-                        <li>
-                            <span class="label">월간 토큰 한도</span>
-                            <span class="value">1,000,000</span>
-                        </li>
-                    </ul>
-
-                    <div class="button-area">
-                        <button type="button" class="btn btn-edit">수정</button>
+                        <button type="button"
+                                class="btn btn-edit"
+                                th:attr="data-plan-id=${plan.planId},
+                                     data-plan-name=${plan.planName},
+                                     data-token-limit=${plan.tokenLimit},
+                                     data-price=${plan.price},
+                                     data-daily-chat-limit=${plan.dailyChatLimit},
+                                     data-image-upload-limit=${plan.imageUploadLimit},
+                                     data-file-upload-limit=${plan.fileUploadLimit},
+                                     data-file-size-limit=${plan.fileSizeLimit}">
+                            수정
+                        </button>
                     </div>
                 </div>
             </section>
@@ -165,42 +114,48 @@
                         <thead>
                             <tr>
                                 <th>항목</th>
-                                <th>NORMAL</th>
-                                <th>PRO</th>
-                                <th>MAX</th>
+                                <th th:text="${plans[0].planName}">NORMAL</th>
+                                <th th:text="${plans[1].planName}">PRO</th>
+                                <th th:text="${plans[2].planName}">MAX</th>
                             </tr>
                         </thead>
 
                         <tbody>
                             <tr>
                                 <td>일일 채팅 제한</td>
-                                <td>20회</td>
-                                <td>100회</td>
-                                <td>무제한</td>
+                                <td th:text="${plans[0].dailyChatLimit == -1 ? '무제한' : plans[0].dailyChatLimit + '회'}">20회</td>
+                                <td th:text="${plans[1].dailyChatLimit == -1 ? '무제한' : plans[1].dailyChatLimit + '회'}">100회</td>
+                                <td th:text="${plans[2].dailyChatLimit == -1 ? '무제한' : plans[2].dailyChatLimit + '회'}">무제한</td>
                             </tr>
                             <tr>
                                 <td>이미지 업로드 제한</td>
-                                <td>5개</td>
-                                <td>20개</td>
-                                <td>50개</td>
+                                <td th:text="${plans[0].imageUploadLimit + '개'}">5개</td>
+                                <td th:text="${plans[1].imageUploadLimit + '개'}">20개</td>
+                                <td th:text="${plans[2].imageUploadLimit + '개'}">50개</td>
                             </tr>
                             <tr>
                                 <td>파일 업로드 제한</td>
-                                <td>3개</td>
-                                <td>10개</td>
-                                <td>30개</td>
+                                <td th:text="${plans[0].fileUploadLimit + '개'}">3개</td>
+                                <td th:text="${plans[1].fileUploadLimit + '개'}">10개</td>
+                                <td th:text="${plans[2].fileUploadLimit + '개'}">30개</td>
                             </tr>
                             <tr>
                                 <td>파일 최대 용량</td>
-                                <td>10MB</td>
-                                <td>50MB</td>
-                                <td>100MB</td>
+                                <td th:text="${plans[0].fileSizeLimit + 'MB'}">10MB</td>
+                                <td th:text="${plans[1].fileSizeLimit + 'MB'}">50MB</td>
+                                <td th:text="${plans[2].fileSizeLimit + 'MB'}">100MB</td>
                             </tr>
                             <tr>
                                 <td>월간 토큰 한도</td>
-                                <td>50,000</td>
-                                <td>300,000</td>
-                                <td>1,000,000</td>
+                                <td th:text="${#numbers.formatInteger(plans[0].tokenLimit, 0, 'COMMA')}">50,000</td>
+                                <td th:text="${#numbers.formatInteger(plans[1].tokenLimit, 0, 'COMMA')}">300,000</td>
+                                <td th:text="${#numbers.formatInteger(plans[2].tokenLimit, 0, 'COMMA')}">1,000,000</td>
+                            </tr>
+                            <tr>
+                                <td>가격</td>
+                                <td th:text="${plans[0].price == 0 ? '무료' : #numbers.formatInteger(plans[0].price, 0, 'COMMA') + '원'}">무료</td>
+                                <td th:text="${plans[1].price == 0 ? '무료' : #numbers.formatInteger(plans[1].price, 0, 'COMMA') + '원'}">9,900원</td>
+                                <td th:text="${plans[2].price == 0 ? '무료' : #numbers.formatInteger(plans[2].price, 0, 'COMMA') + '원'}">29,900원</td>
                             </tr>
                         </tbody>
                     </table>
@@ -208,5 +163,62 @@
             </div>
         </section>
     </main>
+
+    <!-- 플랜 수정 모달 -->
+    <div id="plan-modal" class="modal hidden">
+        <div class="modal-backdrop"></div>
+
+        <div class="modal-dialog">
+            <div class="modal-header">
+                <h2 id="modal-title">플랜 수정</h2>
+                <button type="button" id="modal-close-btn" class="modal-close"><span>취소</span></button>
+            </div>
+
+            <div class="modal-body">
+                <input type="hidden" id="modal-plan-id">
+
+                <div class="form-group">
+                    <label for="modal-plan-name">플랜 이름</label>
+                    <input type="text" id="modal-plan-name" readonly>
+                </div>
+
+                <div class="form-group">
+                    <label for="modal-daily-chat-limit">일일 채팅 제한</label>
+                    <input type="number" id="modal-daily-chat-limit">
+                </div>
+
+                <div class="form-group">
+                    <label for="modal-image-upload-limit">이미지 업로드 제한</label>
+                    <input type="number" id="modal-image-upload-limit">
+                </div>
+
+                <div class="form-group">
+                    <label for="modal-file-upload-limit">파일 업로드 제한</label>
+                    <input type="number" id="modal-file-upload-limit">
+                </div>
+
+                <div class="form-group">
+                    <label for="modal-file-size-limit">파일 최대 용량 (MB)</label>
+                    <input type="number" id="modal-file-size-limit">
+                </div>
+
+                <div class="form-group">
+                    <label for="modal-token-limit">월간 토큰 한도</label>
+                    <input type="number" id="modal-token-limit">
+                </div>
+
+                <div class="form-group">
+                    <label for="modal-price">가격</label>
+                    <input type="number" id="modal-price">
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" id="modal-cancel-btn" class="btn btn-secondary">취소</button>
+                <button type="button" id="modal-save-btn" class="btn btn-primary">저장</button>
+            </div>
+        </div>
+    </div>
+
 </body>
 </html>

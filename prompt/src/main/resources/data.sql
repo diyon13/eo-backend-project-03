@@ -1,12 +1,24 @@
 -- plans (PlanEntity 기준: plan_name, token_limit, ai_use, price)
-INSERT INTO plans (plan_name, token_limit, ai_use, price, created_at, updated_at)
-VALUES ('NORMAL', 10000, 1, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+INSERT INTO plans (
+    plan_name, token_limit, ai_use, price,
+    daily_chat_limit, image_upload_limit, file_upload_limit, file_size_limit,
+    created_at, updated_at
+)
+VALUES ('NORMAL', 10000, 1, 0, 20, 5, 3, 10, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
 
-INSERT INTO plans (plan_name, token_limit, ai_use, price, created_at, updated_at)
-VALUES ('PRO', 100000, 1, 9900, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+INSERT INTO plans (
+    plan_name, token_limit, ai_use, price,
+    daily_chat_limit, image_upload_limit, file_upload_limit, file_size_limit,
+    created_at, updated_at
+)
+VALUES ('PRO', 100000, 1, 9900, 100, 20, 10, 50, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
 
-INSERT INTO plans (plan_name, token_limit, ai_use, price, created_at, updated_at)
-VALUES ('MAX', 500000, 1, 29900, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+INSERT INTO plans (
+    plan_name, token_limit, ai_use, price,
+    daily_chat_limit, image_upload_limit, file_upload_limit, file_size_limit,
+    created_at, updated_at
+)
+VALUES ('MAX', 500000, 1, 29900, -1, 50, 30, 100, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
 
 -- plan_models
 INSERT INTO plan_models (plan_id, model_name) VALUES (1, 'alan-4.0');

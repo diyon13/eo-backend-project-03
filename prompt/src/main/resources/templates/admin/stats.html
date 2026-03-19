@@ -62,7 +62,7 @@
 
                 <div id="button-area">
                     <button type="submit" class="btn btn-primary">검색</button>
-                    <button type="reset" class="btn btn-secondary">초기화</button>
+                    <a th:href="@{/admin/stats}" class="btn btn-secondary">초기화</a>
                 </div>
             </form>
         </div>
@@ -72,27 +72,27 @@
     <section id="stats-card-grid">
         <div class="stats-card">
             <h3>총 채팅방 수</h3>
-            <p th:text="${#numbers.formatInteger(stats.totalChatRooms, 0, 'COMMA')}">12,000</p>
+            <p th:text="${#numbers.formatInteger(stats.totalChatRooms, 0, 'COMMA')}">조회중...</p>
         </div>
 
         <div class="stats-card">
             <h3>총 채팅 수</h3>
-            <p th:text="${#numbers.formatInteger(stats.totalChats, 0, 'COMMA')}">32,000</p>
+            <p th:text="${#numbers.formatInteger(stats.totalChats, 0, 'COMMA')}">조회중...</p>
         </div>
 
         <div class="stats-card">
             <h3>총 이미지 업로드 수</h3>
-            <p th:text="${#numbers.formatInteger(stats.totalImages, 0, 'COMMA')}">5,400</p>
+            <p th:text="${#numbers.formatInteger(stats.totalImages, 0, 'COMMA')}">조회중...</p>
         </div>
 
         <div class="stats-card">
             <h3>총 파일 업로드 수</h3>
-            <p th:text="${#numbers.formatInteger(stats.totalFiles, 0, 'COMMA')}">2,100</p>
+            <p th:text="${#numbers.formatInteger(stats.totalFiles, 0, 'COMMA')}">조회중...</p>
         </div>
 
         <div class="stats-card">
             <h3>총 사용 토큰량</h3>
-            <p th:text="${#numbers.formatInteger(stats.totalUsedTokens, 0, 'COMMA')}">1,250,000</p>
+            <p th:text="${#numbers.formatInteger(stats.totalUsedTokens, 0, 'COMMA')}">조회중...</p>
         </div>
     </section>
 
@@ -123,12 +123,12 @@
 
                 <tr th:each="stat : ${stats.planStats}">
                     <td th:text="${stat.planName}">NORMAL</td>
-                    <td th:text="${#numbers.formatInteger(stat.userCount, 0, 'COMMA')}">5,000</td>
-                    <td th:text="${#numbers.formatInteger(stat.chatRoomCount, 0, 'COMMA')}">3,200</td>
-                    <td th:text="${#numbers.formatInteger(stat.chatCount, 0, 'COMMA')}">15,000</td>
-                    <td th:text="${#numbers.formatInteger(stat.imageCount, 0, 'COMMA')}">2,000</td>
-                    <td th:text="${#numbers.formatInteger(stat.fileCount, 0, 'COMMA')}">800</td>
-                    <td th:text="${#numbers.formatInteger(stat.usedTokens, 0, 'COMMA')}">300,000</td>
+                    <td th:text="${#numbers.formatInteger(stat.userCount, 0, 'COMMA')}">조회중...</td>
+                    <td th:text="${#numbers.formatInteger(stat.chatRoomCount, 0, 'COMMA')}">조회중...</td>
+                    <td th:text="${#numbers.formatInteger(stat.chatCount, 0, 'COMMA')}">조회중...</td>
+                    <td th:text="${#numbers.formatInteger(stat.imageCount, 0, 'COMMA')}">조회중...</td>
+                    <td th:text="${#numbers.formatInteger(stat.fileCount, 0, 'COMMA')}">조회중...</td>
+                    <td th:text="${#numbers.formatInteger(stat.usedTokens, 0, 'COMMA')}">조회중...</td>
                 </tr>
                 </tbody>
             </table>
@@ -155,18 +155,18 @@
                 </tr>
                 </thead>
                 <tbody>
-                <tr th:if="${stats.statsPage.content.isEmpty()}">
+                <tr th:if="${#lists.isEmpty(stats.statsPage.content)}">
                     <td colspan="7">조회된 기간별 통계가 없습니다.</td>
                 </tr>
 
                 <tr th:each="stat : ${stats.statsPage.content}">
                     <td th:text="${stat.statDate}">2026-03-11</td>
-                    <td th:text="${#numbers.formatInteger(stat.signupCount, 0, 'COMMA')}">120</td>
-                    <td th:text="${#numbers.formatInteger(stat.chatRoomCount, 0, 'COMMA')}">340</td>
-                    <td th:text="${#numbers.formatInteger(stat.chatCount, 0, 'COMMA')}">1,450</td>
-                    <td th:text="${#numbers.formatInteger(stat.imageCount, 0, 'COMMA')}">230</td>
-                    <td th:text="${#numbers.formatInteger(stat.fileCount, 0, 'COMMA')}">90</td>
-                    <td th:text="${#numbers.formatInteger(stat.usedTokens, 0, 'COMMA')}">52,000</td>
+                    <td th:text="${#numbers.formatInteger(stat.signupCount, 0, 'COMMA')}">조회중...</td>
+                    <td th:text="${#numbers.formatInteger(stat.chatRoomCount, 0, 'COMMA')}">조회중...</td>
+                    <td th:text="${#numbers.formatInteger(stat.chatCount, 0, 'COMMA')}">조회중...</td>
+                    <td th:text="${#numbers.formatInteger(stat.imageCount, 0, 'COMMA')}">조회중...</td>
+                    <td th:text="${#numbers.formatInteger(stat.fileCount, 0, 'COMMA')}">조회중...</td>
+                    <td th:text="${#numbers.formatInteger(stat.usedTokens, 0, 'COMMA')}">조회중...</td>
                 </tr>
                 </tbody>
             </table>

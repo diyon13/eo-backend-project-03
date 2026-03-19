@@ -39,16 +39,6 @@ public interface AdminService {
     void unlockUser(String adminId, Long userId);
 
     /**
-     * 회원 활성 처리
-     */
-    void activateUser(String adminId, Long userId);
-
-    /**
-     * 회원 비활성 처리
-     */
-    void deactivateUser(String adminId, Long userId);
-
-    /**
      * 관리자 회원 검색 / 페이징
      */
     Page<AdminUserDto> searchUsers(String keyword, String plan, String status, Pageable pageable);
@@ -59,14 +49,34 @@ public interface AdminService {
     void changeUserPlan(String adminId, Long userId, AdminDto.ChangePlanRequest request);
 
     /**
+     * 유저 상태 변경
+     */
+    void changeUserStatus(String adminId, Long userId, AdminDto.ChangeStatusRequest request);
+
+    /**
      * 관리자 처리 이력
      */
-    Page<AdminActionLogDto> getAdminActionLogs(Pageable pageable);
+    Page<AdminActionLogDto> getAdminActionLogs(
+            String adminId,
+            String actionType,
+            String startDate,
+            String endDate,
+            Pageable pageable
+    );
+
+    /**
+     * 관리자 정책 수정
+     */
+    List<AdminPolicyDto> getPolicies();
+
+
+    /**
+     * 관리자 플랜 정책 수정
+     */
+    void updatePolicy(String adminId, Long planId, AdminPolicyUpdateRequest request);
 
     /**
      * 관리자 통계 페이지 데이터 조회
      */
     AdminStatsDto getStats(String periodType, String startDate, String endDate, String planType, int page);
-
-    void changeUserStatus(String adminId, Long userId, AdminDto.ChangeStatusRequest request);
 }

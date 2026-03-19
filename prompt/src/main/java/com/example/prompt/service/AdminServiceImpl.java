@@ -19,6 +19,7 @@ import com.example.prompt.dto.common.enums.AdminUserActionType;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -100,7 +101,7 @@ public class AdminServiceImpl implements AdminService {
 
         long activeUsers = userRepository.countByActiveTrue();
         long lockedUsers = userRepository.countByLockedTrue();
-        long inactiveUsers = userRepository.countByActiveFalse();
+        long withdrawnUsers = userRepository.countByActiveFalse();
 
         LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
         LocalDateTime startOfNextDay = LocalDate.now().plusDays(1).atStartOfDay();
@@ -118,7 +119,7 @@ public class AdminServiceImpl implements AdminService {
                 .todaySignups(todaySignups)
                 .activeUsers(activeUsers)
                 .lockedUsers(lockedUsers)
-                .inactiveUsers(inactiveUsers)
+                .inactiveUsers(withdrawnUsers)
                 .totalChats(totalChats)
                 .totalMessages(totalMessages)
                 .totalImages(0)
@@ -192,50 +193,6 @@ public class AdminServiceImpl implements AdminService {
     }
 
     /**
-     * 회원 활성 처리
-     */
-    @Transactional
-    @Override
-    public void activateUser(String adminId, Long userId) {
-
-        log.info("회원 활성 요청 - adminId={}, userId={}", adminId, userId);
-
-        UserEntity user = userRepository.findById(userId)
-                .orElseThrow(() -> {
-                    log.warn("회원 활성 실패 - 존재하지 않는 userId={}", userId);
-                    return new IllegalArgumentException("회원을 찾을 수 없습니다. id=" + userId);
-                });
-
-        user.setActive(true);
-
-        saveAdminActionLog(adminId, userId, "ACTIVATE", "회원 계정 활성화");
-
-        log.info("회원 활성 처리 완료 - adminId={}, userId={}", adminId, userId);
-    }
-
-    /**
-     * 회원 비활성 처리
-     */
-    @Transactional
-    @Override
-    public void deactivateUser(String adminId, Long userId) {
-
-        log.info("회원 비활성 요청 - adminId={}, userId={}", adminId, userId);
-
-        UserEntity user = userRepository.findById(userId)
-                .orElseThrow(() -> {
-                    log.warn("회원 비활성 실패 - 존재하지 않는 userId={}", userId);
-                    return new IllegalArgumentException("회원을 찾을 수 없습니다. id=" + userId);
-                });
-
-        user.setActive(false);
-
-        saveAdminActionLog(adminId, userId, "DEACTIVATE", "회원 계정 비활성화");
-
-        log.info("회원 비활성 처리 완료 - adminId={}, userId={}", adminId, userId);
-    }
-
-    /**
      * 관리자 회원 검색 + 페이징 조회
      */
     @Override
@@ -264,7 +221,7 @@ public class AdminServiceImpl implements AdminService {
     @Override
     public void changeUserPlan(String adminId, Long userId, AdminDto.ChangePlanRequest request) {
 
-        log.info("회원 플랜 변경 요청 - adminId={}, userId={}, planName={}",
+        log.info("회원 플랜 변경 요청 - adminId={}, userId={}, rawPlanName={}",
                 adminId, userId, request.getPlanName());
 
         UserEntity user = userRepository.findById(userId)
@@ -273,13 +230,25 @@ public class AdminServiceImpl implements AdminService {
                     return new IllegalArgumentException("회원을 찾을 수 없습니다. id=" + userId);
                 });
 
-        String beforePlan = user.getPlan().getPlanName();
+        log.info("회원 조회 성공 - userId={}, currentPlan={}",
+                user.getId(),
+                user.getPlan() != null ? user.getPlan().getPlanName() : "없음");
 
-        PlanEntity plan = planRepository.findByPlanName(request.getPlanName())
+        String beforePlan = user.getPlan() != null ? user.getPlan().getPlanName() : "없음";
+
+        String planName = request.getPlanName() != null
+                ? request.getPlanName().trim().toUpperCase()
+                : null;
+
+        log.info("정규화된 planName={}", planName);
+
+        PlanEntity plan = planRepository.findByPlanName(planName)
                 .orElseThrow(() -> {
-                    log.warn("회원 플랜 변경 실패 - 존재하지 않는 planName={}", request.getPlanName());
-                    return new IllegalArgumentException("존재하지 않는 플랜입니다. planName=" + request.getPlanName());
+                    log.warn("회원 플랜 변경 실패 - 존재하지 않는 planName={}", planName);
+                    return new IllegalArgumentException("존재하지 않는 플랜입니다. planName=" + planName);
                 });
+
+        log.info("플랜 조회 성공 - foundPlan={}", plan.getPlanName());
 
         user.setPlan(plan);
 
@@ -292,6 +261,55 @@ public class AdminServiceImpl implements AdminService {
 
         log.info("회원 플랜 변경 완료 - adminId={}, userId={}, changedPlan={}",
                 adminId, userId, plan.getPlanName());
+    }
+
+    /**
+     * 회원 상태 변경
+     */
+    @Override
+    @Transactional
+    public void changeUserStatus(String adminId, Long userId, AdminDto.ChangeStatusRequest request) {
+
+        log.info("회원 상태 변경 요청 - adminId={}, userId={}, action={}",
+                adminId, userId, request.getAction());
+
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> {
+                    log.warn("회원 상태 변경 실패 - 존재하지 않는 userId={}", userId);
+                    return new IllegalArgumentException("회원을 찾을 수 없습니다.");
+                });
+
+        AdminUserActionType action = request.getAction();
+
+        switch (action) {
+            case LOCK -> user.setLocked(true);
+
+            case UNLOCK -> user.setLocked(false);
+
+            case RESTORE -> {
+                user.setActive(true);
+                user.setLocked(false);
+            }
+
+            case WITHDRAW -> {
+                user.setActive(false);
+                user.setLocked(false);
+            }
+        }
+
+        user.setUpdatedAt(LocalDateTime.now());
+
+        adminActionLogRepository.save(
+                AdminActionLogEntity.builder()
+                        .adminId(adminId)
+                        .targetUserId(userId)
+                        .actionType(action.name())
+                        .description("회원 상태 변경 - " + action.name())
+                        .build()
+        );
+
+        log.info("회원 상태 변경 완료 - adminId={}, userId={}, action={}",
+                adminId, userId, action);
     }
 
     /**
@@ -312,16 +330,90 @@ public class AdminServiceImpl implements AdminService {
      * 관리자 처리 이력 조회
      */
     @Override
-    public Page<AdminActionLogDto> getAdminActionLogs(Pageable pageable) {
+    public Page<AdminActionLogDto> getAdminActionLogs(String adminId,
+                                                      String actionType,
+                                                      String startDate,
+                                                      String endDate,
+                                                      Pageable pageable) {
 
-        log.info("관리자 처리 이력 조회 요청 - page={}, size={}",
-                pageable.getPageNumber(), pageable.getPageSize());
+        LocalDateTime startDateTime = null;
+        LocalDateTime endDateTime = null;
 
-        Page<AdminActionLogEntity> logs = adminActionLogRepository.findAllByOrderByCreatedAtDesc(pageable);
+        if (startDate != null && !startDate.isBlank()) {
+            startDateTime = LocalDate.parse(startDate).atStartOfDay();
+        }
 
-        log.info("관리자 처리 이력 조회 성공 - totalElements={}", logs.getTotalElements());
+        if (endDate != null && !endDate.isBlank()) {
+            endDateTime = LocalDate.parse(endDate).atTime(LocalTime.MAX);
+        }
+
+        AdminUserActionType actionEnum = null;
+        if (actionType != null && !actionType.isBlank()) {
+            actionEnum = AdminUserActionType.valueOf(actionType);
+        }
+
+        Page<AdminActionLogEntity> logs = adminActionLogRepository.searchLogs(
+                adminId,
+                actionEnum,
+                startDateTime,
+                endDateTime,
+                pageable
+        );
 
         return logs.map(AdminActionLogDto::from);
+    }
+
+
+    /**
+     * 관리자 정책 조회
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public List<AdminPolicyDto> getPolicies() {
+
+        log.info("관리자 정책 목록 조회 요청");
+
+        List<AdminPolicyDto> policies = planRepository.findAllByOrderByPlanIdAsc()
+                .stream()
+                .map(AdminPolicyDto::from)
+                .toList();
+
+        log.info("관리자 정책 목록 조회 성공 - count={}", policies.size());
+
+        return policies;
+    }
+
+    /**
+     * 관리자 플랜 정책 수정
+     */
+    @Transactional
+    @Override
+    public void updatePolicy(String adminId, Long planId, AdminPolicyUpdateRequest request) {
+
+        log.info("관리자 플랜 정책 수정 요청 - adminId={}, planId={}", adminId, planId);
+
+        PlanEntity plan = planRepository.findById(planId)
+                .orElseThrow(() -> {
+                    log.warn("플랜 정책 수정 실패 - 존재하지 않는 planId={}", planId);
+                    return new IllegalArgumentException("플랜을 찾을 수 없습니다. id=" + planId);
+                });
+
+        plan.setDailyChatLimit(request.getDailyChatLimit());
+        plan.setImageUploadLimit(request.getImageUploadLimit());
+        plan.setFileUploadLimit(request.getFileUploadLimit());
+        plan.setFileSizeLimit(request.getFileSizeLimit());
+        plan.setTokenLimit(request.getTokenLimit());
+        plan.setPrice(request.getPrice());
+
+        saveAdminActionLog(
+                adminId,
+                null,
+                "UPDATE_POLICY",
+                "플랜 정책 수정 - " + plan.getPlanName()
+        );
+
+        log.info("관리자 플랜 정책 수정 완료 - adminId={}, planId={}, planName={}",
+                adminId, planId, plan.getPlanName());
     }
 
     /**
@@ -334,12 +426,37 @@ public class AdminServiceImpl implements AdminService {
         log.info("관리자 통계 조회 요청 - periodType={}, startDate={}, endDate={}, planType={}, page={}",
                 periodType, startDate, endDate, planType, page);
 
-        // 전체 채팅방 수
+        // 기본 날짜 처리
+        LocalDate start;
+        LocalDate end;
+
+        if (startDate != null && !startDate.isBlank()) {
+            start = LocalDate.parse(startDate);
+        } else {
+            start = LocalDate.now().minusDays(6);
+            startDate = start.toString();
+        }
+
+        if (endDate != null && !endDate.isBlank()) {
+            end = LocalDate.parse(endDate);
+        } else {
+            end = LocalDate.now();
+            endDate = end.toString();
+        }
+
+        // 날짜 역전 방지
+        if (start.isAfter(end)) {
+            LocalDate temp = start;
+            start = end;
+            end = temp;
+
+            startDate = start.toString();
+            endDate = end.toString();
+        }
+
+        // 상단 요약 통계
         long totalChatRooms = chatRoomRepository.count();
-
-        // 전체 채팅 수
         long totalChats = 0;
-
         long totalImages = 0;
         long totalFiles = 0;
         long totalUsedTokens = userRepository.findAll()
@@ -347,61 +464,139 @@ public class AdminServiceImpl implements AdminService {
                 .mapToLong(UserEntity::getUsedToken)
                 .sum();
 
+        // 플랜별 통계
         List<AdminStatsDto.PlanStat> planStats = new ArrayList<>();
 
-        long normalUserCount = userRepository.countByPlan_PlanName("NORMAL");
-        long proUserCount = userRepository.countByPlan_PlanName("PRO");
-        long maxUserCount = userRepository.countByPlan_PlanName("MAX");
+        if (planType == null || planType.isBlank() || planType.equals("NORMAL")) {
+            planStats.add(AdminStatsDto.PlanStat.builder()
+                    .planName("NORMAL")
+                    .userCount(userRepository.countByPlan_PlanName("NORMAL"))
+                    .chatRoomCount(0)
+                    .chatCount(0)
+                    .imageCount(0)
+                    .fileCount(0)
+                    .usedTokens(0)
+                    .build());
+        }
 
-        planStats.add(AdminStatsDto.PlanStat.builder()
-                .planName("NORMAL")
-                .userCount(normalUserCount)
-                .chatRoomCount(0)
-                .chatCount(0)
-                .imageCount(0)
-                .fileCount(0)
-                .usedTokens(0)
-                .build());
+        if (planType == null || planType.isBlank() || planType.equals("PRO")) {
+            planStats.add(AdminStatsDto.PlanStat.builder()
+                    .planName("PRO")
+                    .userCount(userRepository.countByPlan_PlanName("PRO"))
+                    .chatRoomCount(0)
+                    .chatCount(0)
+                    .imageCount(0)
+                    .fileCount(0)
+                    .usedTokens(0)
+                    .build());
+        }
 
-        planStats.add(AdminStatsDto.PlanStat.builder()
-                .planName("PRO")
-                .userCount(proUserCount)
-                .chatRoomCount(0)
-                .chatCount(0)
-                .imageCount(0)
-                .fileCount(0)
-                .usedTokens(0)
-                .build());
+        if (planType == null || planType.isBlank() || planType.equals("MAX")) {
+            planStats.add(AdminStatsDto.PlanStat.builder()
+                    .planName("MAX")
+                    .userCount(userRepository.countByPlan_PlanName("MAX"))
+                    .chatRoomCount(0)
+                    .chatCount(0)
+                    .imageCount(0)
+                    .fileCount(0)
+                    .usedTokens(0)
+                    .build());
+        }
 
-        planStats.add(AdminStatsDto.PlanStat.builder()
-                .planName("MAX")
-                .userCount(maxUserCount)
-                .chatRoomCount(0)
-                .chatCount(0)
-                .imageCount(0)
-                .fileCount(0)
-                .usedTokens(0)
-                .build());
+        // 기간별 통계
+        List<AdminStatsDto.PeriodStat> allPeriodStats = new ArrayList<>();
 
-        Pageable pageable = PageRequest.of(page, 10);
+        if ("monthly".equals(periodType)) {
+            LocalDate current = start.withDayOfMonth(1);
+            LocalDate lastMonth = end.withDayOfMonth(1);
 
-        List<AdminStatsDto.PeriodStat> periodStats = new ArrayList<>();
+            while (!current.isAfter(lastMonth)) {
+                LocalDate monthStart = current;
+                LocalDate monthEnd = current.plusMonths(1);
 
-        periodStats.add(AdminStatsDto.PeriodStat.builder()
-                .statDate(LocalDate.now().toString())
-                .signupCount(userRepository.countByCreatedAtBetween(
-                        LocalDate.now().atStartOfDay(),
-                        LocalDate.now().plusDays(1).atStartOfDay()
-                ))
-                .chatRoomCount(0)
-                .chatCount(0)
-                .imageCount(0)
-                .fileCount(0)
-                .usedTokens(0)
-                .build());
+                long signupCount = userRepository.countByCreatedAtBetween(
+                        monthStart.atStartOfDay(),
+                        monthEnd.atStartOfDay()
+                );
+
+                allPeriodStats.add(AdminStatsDto.PeriodStat.builder()
+                        .statDate(current.getYear() + "-" + String.format("%02d", current.getMonthValue()))
+                        .signupCount(signupCount)
+                        .chatRoomCount(0)
+                        .chatCount(0)
+                        .imageCount(0)
+                        .fileCount(0)
+                        .usedTokens(0)
+                        .build());
+
+                current = current.plusMonths(1);
+            }
+
+        } else if ("weekly".equals(periodType)) {
+            LocalDate current = start;
+
+            while (!current.isAfter(end)) {
+                LocalDate weekStart = current;
+                LocalDate weekEnd = current.plusDays(6);
+                if (weekEnd.isAfter(end)) {
+                    weekEnd = end;
+                }
+
+                long signupCount = userRepository.countByCreatedAtBetween(
+                        weekStart.atStartOfDay(),
+                        weekEnd.plusDays(1).atStartOfDay()
+                );
+
+                allPeriodStats.add(AdminStatsDto.PeriodStat.builder()
+                        .statDate(weekStart + " ~ " + weekEnd)
+                        .signupCount(signupCount)
+                        .chatRoomCount(0)
+                        .chatCount(0)
+                        .imageCount(0)
+                        .fileCount(0)
+                        .usedTokens(0)
+                        .build());
+
+                current = weekEnd.plusDays(1);
+            }
+
+        } else {
+            LocalDate current = start;
+
+            while (!current.isAfter(end)) {
+                long signupCount = userRepository.countByCreatedAtBetween(
+                        current.atStartOfDay(),
+                        current.plusDays(1).atStartOfDay()
+                );
+
+                allPeriodStats.add(AdminStatsDto.PeriodStat.builder()
+                        .statDate(current.toString())
+                        .signupCount(signupCount)
+                        .chatRoomCount(0)
+                        .chatCount(0)
+                        .imageCount(0)
+                        .fileCount(0)
+                        .usedTokens(0)
+                        .build());
+
+                current = current.plusDays(1);
+            }
+        }
+
+        // 페이지 처리
+        int pageSize = 10;
+        Pageable pageable = PageRequest.of(page, pageSize);
+
+        int startIndex = (int) pageable.getOffset();
+        int endIndex = Math.min(startIndex + pageable.getPageSize(), allPeriodStats.size());
+
+        List<AdminStatsDto.PeriodStat> pageContent =
+                startIndex >= allPeriodStats.size()
+                        ? new ArrayList<>()
+                        : allPeriodStats.subList(startIndex, endIndex);
 
         Page<AdminStatsDto.PeriodStat> statsPage =
-                new PageImpl<>(periodStats, pageable, periodStats.size());
+                new PageImpl<>(pageContent, pageable, allPeriodStats.size());
 
         AdminStatsDto stats = AdminStatsDto.builder()
                 .periodType(periodType)
@@ -417,44 +612,10 @@ public class AdminServiceImpl implements AdminService {
                 .statsPage(statsPage)
                 .build();
 
-        log.info("관리자 통계 조회 성공 - totalChatRooms={}, totalUsedTokens={}", totalChatRooms, totalUsedTokens);
+        log.info("관리자 통계 조회 성공 - totalChatRooms={}, totalUsedTokens={}, periodStatsCount={}",
+                totalChatRooms, totalUsedTokens, allPeriodStats.size());
 
         return stats;
     }
 
-    @Override
-    @Transactional
-    public void changeUserStatus(String adminId, Long userId, AdminDto.ChangeStatusRequest request) {
-
-        UserEntity user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("회원을 찾을 수 없습니다."));
-
-        AdminUserActionType action = request.getAction();
-
-        switch (action) {
-            case LOCK -> user.setLocked(true);
-
-            case UNLOCK -> user.setLocked(false);
-
-            case ACTIVATE, RESTORE -> {
-                user.setActive(true);
-                user.setLocked(false);
-            }
-
-            case INACTIVE, WITHDRAW -> user.setActive(false);
-        }
-
-        // 상태 변경 시간 (있으면)
-        user.setUpdatedAt(LocalDateTime.now());
-
-        // 관리자 로그
-        adminActionLogRepository.save(
-                AdminActionLogEntity.builder()
-                        .adminId(adminId)
-                        .targetUserId(userId)
-                        .actionType(action.name())
-                        .description("회원 상태 변경")
-                        .build()
-        );
-    }
 }

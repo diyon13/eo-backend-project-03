@@ -39,11 +39,28 @@ public class PlanEntity {
     @Column(name = "price", nullable = false)
     private int price;
 
+    // 일일 채팅 제한
+    @Column(name = "daily_chat_limit", nullable = false)
+    private int dailyChatLimit;
+
+    // 이미지 업로드 제한
+    @Column(name = "image_upload_limit", nullable = false)
+    private int imageUploadLimit;
+
+    // 파일 업로드 제한
+    @Column(name = "file_upload_limit", nullable = false)
+    private int fileUploadLimit;
+
+    // 파일 최대 용량(MB)
+    @Column(name = "file_size_limit", nullable = false)
+    private int fileSizeLimit;
+
     // 생성일자
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    // 수정일자
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;

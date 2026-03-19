@@ -29,7 +29,7 @@ public class AdminActionLogEntity {
     /**
      * 대상 회원 ID
      */
-    @Column(name = "target_user_id", nullable = false)
+    @Column(name = "target_user_id")
     private Long targetUserId;
 
     /**

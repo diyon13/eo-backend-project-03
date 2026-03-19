@@ -8,8 +8,8 @@ document.addEventListener("DOMContentLoaded", function () {
     const planSelect = document.getElementById("detail-plan-select");
 
     const detailButtons = document.querySelectorAll(".detail-btn");
+    const rowActionButtons = document.querySelectorAll(".action-buttons .btn-action:not(.detail-btn)");
     const actionButtons = document.querySelectorAll("#detail-action-buttons .btn-action");
-    const statusToggleButtons = document.querySelectorAll(".status-toggle-btn");
 
     const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
     const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
@@ -17,7 +17,6 @@ document.addEventListener("DOMContentLoaded", function () {
     let originalDetailData = null;
     let currentDetailData = null;
     let pendingAction = null;
-
 
     if (!overlay || !closeBtn || !cancelBtn || !saveBtn || !targetUserIdInput || !planSelect) {
         console.error("회원 상세 모달에 필요한 요소를 찾을 수 없습니다.");
@@ -69,39 +68,39 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
+    function renderDetailStatusTexts(data) {
+        fillText("detail-user-active", data.active ? "활성" : "탈퇴");
+        fillText("detail-user-locked", data.locked ? "잠금" : "정상");
+        fillText("detail-user-deleted", data.active ? "정상" : "탈퇴");
+    }
+
     function updateActionButtonsByState(data) {
-        actionButtons.forEach(function (button) {
-            const baseAction = button.dataset.baseAction || button.dataset.action;
-            button.dataset.baseAction = baseAction;
+        const lockBtn = document.getElementById("detail-lock-btn");
+        const withdrawBtn = document.getElementById("detail-withdraw-btn");
 
-            if (baseAction === "LOCK") {
-                if (data.locked) {
-                    button.dataset.action = "UNLOCK";
-                    button.textContent = "잠금해제";
-                } else {
-                    button.dataset.action = "LOCK";
-                    button.textContent = "잠금";
-                }
-                button.style.display = "";
+        if (lockBtn) {
+            if (data.locked) {
+                lockBtn.dataset.action = "UNLOCK";
+                lockBtn.textContent = "잠금해제";
+                lockBtn.className = "btn-action unlock-btn";
+            } else {
+                lockBtn.dataset.action = "LOCK";
+                lockBtn.textContent = "잠금";
+                lockBtn.className = "btn-action lock-btn";
             }
+        }
 
-            if (baseAction === "INACTIVE") {
-                if (data.active) {
-                    button.dataset.action = "INACTIVE";
-                    button.textContent = "비활성화";
-                } else {
-                    button.dataset.action = "RESTORE";
-                    button.textContent = "활성화";
-                }
-                button.style.display = "";
+        if (withdrawBtn) {
+            if (data.active) {
+                withdrawBtn.dataset.action = "WITHDRAW";
+                withdrawBtn.textContent = "회원 탈퇴";
+                withdrawBtn.className = "btn-action withdraw-btn";
+            } else {
+                withdrawBtn.dataset.action = "RESTORE";
+                withdrawBtn.textContent = "복구";
+                withdrawBtn.className = "btn-action restore-btn";
             }
-
-            if (baseAction === "WITHDRAW") {
-                button.dataset.action = "WITHDRAW";
-                button.textContent = "탈퇴";
-                button.style.display = "";
-            }
-        });
+        }
 
         if (pendingAction) {
             markSelectedActionButton(pendingAction);
@@ -135,14 +134,6 @@ document.addEventListener("DOMContentLoaded", function () {
         targetUserIdInput.value = data.id ?? "";
 
         updateActionButtonsByState(data);
-    }
-
-    function renderDetailStatusTexts(data) {
-        fillText("detail-user-active", data.active ? "활성" : "비활성");
-        fillText("detail-user-locked", data.locked ? "잠금" : "정상");
-
-        // 지금은 active=false를 탈퇴로 보지 말고 비활성으로 맞추기
-        fillText("detail-user-deleted", "정상");
     }
 
     async function fetchUserDetail(userId) {
@@ -182,57 +173,92 @@ document.addEventListener("DOMContentLoaded", function () {
                 return "이 회원을 잠금 처리하시겠습니까?";
             case "UNLOCK":
                 return "이 회원의 잠금을 해제하시겠습니까?";
+            case "WITHDRAW":
+                return "이 회원을 탈퇴 처리하시겠습니까?";
             case "RESTORE":
-                return "이 회원을 활성화하시겠습니까?";
+                return "이 회원을 복구하시겠습니까?";
             default:
                 return "상태를 변경하시겠습니까?";
         }
     }
 
-    function updateRowStatus(row, action) {
-        const statusElement = row.querySelector(".status");
-        const button = row.querySelector(".status-toggle-btn");
+    function renderRowStatus(row, data) {
+        const statusCell = row.querySelector("td:nth-child(4) .status-badges");
+        if (!statusCell) return;
 
-        if (!statusElement || !button) {
-            return;
+        let html = "";
+
+        if (data.active) {
+            html += `<span class="status active">활성</span>`;
+        } else {
+            html += `<span class="status deleted">탈퇴</span>`;
         }
 
-        button.classList.remove("lock-btn", "unlock-btn", "restore-btn");
-
-        if (action === "LOCK") {
-            statusElement.textContent = "잠금";
-            statusElement.className = "status locked";
-
-            button.dataset.action = "UNLOCK";
-            button.textContent = "잠금해제";
-            button.classList.add("unlock-btn");
+        if (data.locked) {
+            html += `<span class="status locked">잠금</span>`;
         }
 
-        if (action === "UNLOCK") {
-            statusElement.textContent = "활성";
-            statusElement.className = "status active";
+        statusCell.innerHTML = html;
+    }
 
-            button.dataset.action = "LOCK";
-            button.textContent = "잠금";
-            button.classList.add("lock-btn");
+    function renderRowButtons(row, data) {
+        const buttons = row.querySelectorAll(".action-buttons .btn-action");
+        let lockBtn = null;
+        let withdrawBtn = null;
+
+        buttons.forEach(function (btn) {
+            if (btn.classList.contains("detail-btn")) return;
+
+            const action = btn.dataset.action;
+            if (action === "LOCK" || action === "UNLOCK") {
+                lockBtn = btn;
+            } else if (action === "WITHDRAW" || action === "RESTORE") {
+                withdrawBtn = btn;
+            }
+        });
+
+        if (!lockBtn || !withdrawBtn) {
+            const allButtons = row.querySelectorAll(".action-buttons .btn-action");
+            lockBtn = allButtons[1];
+            withdrawBtn = allButtons[2];
         }
 
-        if (action === "RESTORE") {
-            statusElement.textContent = "활성";
-            statusElement.className = "status active";
+        if (lockBtn) {
+            lockBtn.dataset.userId = data.id;
 
-            button.dataset.action = "LOCK";
-            button.textContent = "잠금";
-            button.classList.add("lock-btn");
+            if (data.locked) {
+                lockBtn.dataset.action = "UNLOCK";
+                lockBtn.textContent = "잠금해제";
+                lockBtn.className = "btn-action unlock-btn";
+            } else {
+                lockBtn.dataset.action = "LOCK";
+                lockBtn.textContent = "잠금";
+                lockBtn.className = "btn-action lock-btn";
+            }
         }
 
-        if (action === "INACTIVE" || action === "WITHDRAW") {
-            statusElement.textContent = "탈퇴";
-            statusElement.className = "status deleted";
+        if (withdrawBtn) {
+            withdrawBtn.dataset.userId = data.id;
 
-            button.dataset.action = "RESTORE";
-            button.textContent = "활성화";
-            button.classList.add("restore-btn");
+            if (data.active) {
+                withdrawBtn.dataset.action = "WITHDRAW";
+                withdrawBtn.textContent = "탈퇴";
+                withdrawBtn.className = "btn-action withdraw-btn";
+            } else {
+                withdrawBtn.dataset.action = "RESTORE";
+                withdrawBtn.textContent = "복구";
+                withdrawBtn.className = "btn-action restore-btn";
+            }
+        }
+    }
+
+    function updateRowView(row, data) {
+        renderRowStatus(row, data);
+        renderRowButtons(row, data);
+
+        const planCell = row.children[2];
+        if (planCell) {
+            planCell.textContent = data.planName ?? "-";
         }
     }
 
@@ -250,6 +276,60 @@ document.addEventListener("DOMContentLoaded", function () {
             }
 
             fetchUserDetail(userId);
+        });
+    });
+
+    rowActionButtons.forEach(function (button) {
+        button.addEventListener("click", async function () {
+            const userId = this.dataset.userId;
+            const action = this.dataset.action;
+
+            if (!userId || !action) {
+                alert("회원 상태 변경 정보가 올바르지 않습니다.");
+                return;
+            }
+
+            const confirmed = confirm(getStatusConfirmMessage(action));
+            if (!confirmed) return;
+
+            try {
+                const response = await fetch(`/admin/api/users/${userId}/status`, {
+                    method: "PATCH",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Accept": "application/json",
+                        [csrfHeader]: csrfToken
+                    },
+                    body: JSON.stringify({
+                        action: action
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error("상태 변경 실패");
+                }
+
+                const row = findUserRow(userId);
+
+                if (row) {
+                    const updatedData = {
+                        id: userId,
+                        active: action === "WITHDRAW" ? false : action === "RESTORE" ? true : !row.querySelector(".status.deleted"),
+                        locked: action === "LOCK" ? true : action === "UNLOCK" ? false : !!row.querySelector(".status.locked"),
+                        planName: row.children[2]?.textContent?.trim() || "-"
+                    };
+
+                    if (action === "WITHDRAW") {
+                        updatedData.locked = false;
+                    }
+
+                    updateRowView(row, updatedData);
+                }
+
+                alert("회원 상태가 변경되었습니다.");
+            } catch (error) {
+                alert(error.message || "상태 변경 중 오류가 발생했습니다.");
+            }
         });
     });
 
@@ -280,13 +360,10 @@ document.addEventListener("DOMContentLoaded", function () {
                     confirmMessage = "이 회원의 잠금을 해제하시겠습니까?";
                     break;
                 case "RESTORE":
-                    confirmMessage = "이 회원을 다시 활성화하시겠습니까?";
-                    break;
-                case "INACTIVE":
-                    confirmMessage = "이 회원을 비활성화하시겠습니까?";
+                    confirmMessage = "이 회원을 복구하시겠습니까?";
                     break;
                 case "WITHDRAW":
-                    confirmMessage = "회원 탈퇴 처리 시 계정이 비활성화되며 복구 정책을 다시 확인해야 합니다.\n정말 탈퇴 처리하시겠습니까?";
+                    confirmMessage = "이 회원을 탈퇴 처리하시겠습니까?";
                     break;
                 default:
                     confirmMessage = "상태를 변경하시겠습니까?";
@@ -298,22 +375,18 @@ document.addEventListener("DOMContentLoaded", function () {
                 return;
             }
 
-            // 모달 안 임시 상태 즉시 반영
             if (action === "LOCK") {
                 currentDetailData.locked = true;
                 pendingAction = "LOCK";
             } else if (action === "UNLOCK") {
                 currentDetailData.locked = false;
                 pendingAction = "UNLOCK";
-            } else if (action === "INACTIVE") {
-                currentDetailData.active = false;
-                pendingAction = "INACTIVE";
-            } else if (action === "RESTORE") {
-                currentDetailData.active = true;
-                pendingAction = "RESTORE";
             } else if (action === "WITHDRAW") {
                 currentDetailData.active = false;
                 pendingAction = "WITHDRAW";
+            } else if (action === "RESTORE") {
+                currentDetailData.active = true;
+                pendingAction = "RESTORE";
             }
 
             renderDetailStatusTexts(currentDetailData);
@@ -392,6 +465,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
             alert("회원 정보가 저장되었습니다.");
             await refreshDetailAfterSave(userId);
+            closeOverlay();
         } catch (error) {
             alert(error.message || "저장 중 오류가 발생했습니다.");
         }
@@ -424,65 +498,11 @@ document.addEventListener("DOMContentLoaded", function () {
             fillUserDetail(currentDetailData);
 
             const row = findUserRow(userId);
-
             if (row) {
-                if (data.locked) {
-                    updateRowStatus(row, "LOCK");
-                } else if (!data.active) {
-                    updateRowStatus(row, "WITHDRAW");
-                } else {
-                    updateRowStatus(row, "UNLOCK");
-                }
-
-                const planCell = row.children[2];
-                if (planCell) {
-                    planCell.textContent = data.planName ?? "-";
-                }
+                updateRowView(row, data);
             }
         } catch (error) {
             alert(error.message || "저장 후 화면 갱신에 실패했습니다.");
         }
     }
-
-    statusToggleButtons.forEach(function (button) {
-        button.addEventListener("click", async function () {
-            const userId = this.dataset.userId;
-            const action = this.dataset.action;
-            const row = this.closest("tr");
-
-            if (!userId || !action) {
-                alert("회원 상태 변경 정보가 올바르지 않습니다.");
-                return;
-            }
-
-            const confirmed = confirm(getStatusConfirmMessage(action));
-
-            if (!confirmed) {
-                return;
-            }
-
-            try {
-                const response = await fetch(`/admin/api/users/${userId}/status`, {
-                    method: "PATCH",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Accept": "application/json",
-                        [csrfHeader]: csrfToken
-                    },
-                    body: JSON.stringify({
-                        action: action
-                    })
-                });
-
-                if (!response.ok) {
-                    throw new Error("상태 변경 실패");
-                }
-
-                updateRowStatus(row, action);
-                alert("회원 상태가 변경되었습니다.");
-            } catch (error) {
-                alert(error.message || "상태 변경 중 오류가 발생했습니다.");
-            }
-        });
-    });
 });

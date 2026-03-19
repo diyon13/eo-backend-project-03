@@ -60,7 +60,7 @@ public class AdminController {
     @ResponseBody
     @PatchMapping("/api/users/{userId}/lock")
     public ApiResponse<Void> lockUser(Authentication authentication, @PathVariable Long userId) {
-        String adminId = (String) authentication.getPrincipal();
+        String adminId = (String) authentication.getName();
         adminService.lockUser(adminId, userId);
         return ApiResponse.ok(null);
     }
@@ -71,30 +71,8 @@ public class AdminController {
     @ResponseBody
     @PatchMapping("/api/users/{userId}/unlock")
     public ApiResponse<Void> unlockUser(Authentication authentication, @PathVariable Long userId) {
-        String adminId = (String) authentication.getPrincipal();
+        String adminId = (String) authentication.getName();
         adminService.unlockUser(adminId, userId);
-        return ApiResponse.ok(null);
-    }
-
-    /**
-     * 회원 활성화
-     */
-    @ResponseBody
-    @PatchMapping("/api/users/{userId}/activate")
-    public ApiResponse<Void> activateUser(Authentication authentication, @PathVariable Long userId) {
-        String adminId = (String) authentication.getPrincipal();
-        adminService.activateUser(adminId, userId);
-        return ApiResponse.ok(null);
-    }
-
-    /**
-     * 회원 비활성화 (탈퇴 처리)
-     */
-    @ResponseBody
-    @PatchMapping("/api/users/{userId}/deactivate")
-    public ApiResponse<Void> deactivateUser(Authentication authentication, @PathVariable Long userId) {
-        String adminId = (String) authentication.getPrincipal();
-        adminService.deactivateUser(adminId, userId);
         return ApiResponse.ok(null);
     }
 
@@ -108,7 +86,7 @@ public class AdminController {
             @PathVariable Long userId,
             @Valid @RequestBody AdminDto.ChangePlanRequest request
     ) {
-        String adminId = (String) authentication.getPrincipal();
+        String adminId = authentication.getName();
         adminService.changeUserPlan(adminId, userId, request);
         return ApiResponse.ok(null);
     }
@@ -128,14 +106,6 @@ public class AdminController {
         return ApiResponse.ok(null);
     }
 
-    /**
-     * 관리자 처리 이력 조회
-     */
-    @ResponseBody
-    @GetMapping("/api/logs")
-    public ApiResponse<Page<AdminActionLogDto>> getAdminActionLogs(Pageable pageable) {
-        return ApiResponse.ok(adminService.getAdminActionLogs(pageable));
-    }
 
     /**
      * 관리자 대시보드 페이지
@@ -208,7 +178,9 @@ public class AdminController {
     ) {
         Pageable pageable = PageRequest.of(page, 10, Sort.by(Sort.Direction.DESC, "createdAt"));
 
-        Page<AdminActionLogDto> logs = adminService.getAdminActionLogs(pageable);
+        Page<AdminActionLogDto> logs = adminService.getAdminActionLogs(
+                adminId, actionType, startDate, endDate, pageable
+        );
 
         model.addAttribute("logs", logs);
         model.addAttribute("adminId", adminId);
@@ -223,8 +195,24 @@ public class AdminController {
      * 관리자 플랜 / 정책 페이지
      */
     @GetMapping("/policies")
-    public String policies() {
+    public String policies(Model model) {
+        model.addAttribute("plans", adminService.getPolicies());
         return "admin/policies";
+    }
+
+    /**
+     * 관리자 플랜 / 정책 수정
+     */
+    @ResponseBody
+    @PatchMapping("/api/plans/{planId}")
+    public ApiResponse<Void> updatePolicy(
+            Authentication authentication,
+            @PathVariable Long planId,
+            @Valid @RequestBody AdminPolicyUpdateRequest request
+    ) {
+        String adminId = authentication.getName();
+        adminService.updatePolicy(adminId, planId, request);
+        return ApiResponse.ok(null);
     }
 
     /**

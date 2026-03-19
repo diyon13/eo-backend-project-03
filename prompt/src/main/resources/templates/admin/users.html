@@ -107,17 +107,18 @@
                                 <td th:text="${user.planName}">NORMAL</td>
 
                                 <td>
-                                    <span class="status"
-                                          th:classappend="${user.locked} ? ' locked' : (${!user.active} ? ' deleted' : ' active')"
-                                          th:text="${user.locked} ? '잠금' : (${!user.active} ? '탈퇴' : '활성')">
-                                        활성
-                                    </span>
+                                    <div class="status-badges">
+                                        <span class="status active" th:if="${user.active}">활성</span>
+                                        <span class="status deleted" th:if="${!user.active}">탈퇴</span>
+                                        <span class="status locked" th:if="${user.locked}">잠금</span>
+                                    </div>
                                 </td>
 
                                 <td th:text="${#temporals.format(user.createdAt, 'yyyy-MM-dd')}">2026-03-11</td>
 
                                 <td>
                                     <div class="action-buttons">
+                                        <!-- 상세 -->
                                         <button type="button"
                                                 class="btn-action detail-btn"
                                                 th:attr="data-user-id=${user.id}">
@@ -125,10 +126,17 @@
                                         </button>
 
                                         <button type="button"
-                                                th:class="'btn-action status-toggle-btn ' + (${user.locked} ? 'unlock-btn' : (${!user.active} ? 'restore-btn' : 'lock-btn'))"
-                                                th:attr="data-user-id=${user.id},data-action=${user.locked} ? 'UNLOCK' : (${!user.active} ? 'RESTORE' : 'LOCK')"
-                                                th:text="${user.locked} ? '잠금해제' : (${!user.active} ? '활성화' : '잠금')">
+                                                th:class="'btn-action ' + (${user.locked} ? 'unlock-btn' : 'lock-btn')"
+                                                th:attr="data-user-id=${user.id},data-action=${user.locked} ? 'UNLOCK' : 'LOCK'"
+                                                th:text="${user.locked} ? '잠금해제' : '잠금'">
                                             잠금
+                                        </button>
+
+                                        <button type="button"
+                                                th:class="'btn-action ' + (${!user.active} ? 'restore-btn' : 'withdraw-btn')"
+                                                th:attr="data-user-id=${user.id}, data-action=${!user.active} ? 'RESTORE' : 'WITHDRAW'"
+                                                th:text="${!user.active} ? '복구' : '탈퇴'">
+                                            탈퇴
                                         </button>
                                     </div>
                                 </td>
@@ -185,27 +193,27 @@
                     <div class="detail-grid">
                         <div class="detail-item">
                             <span class="detail-label">회원번호</span>
-                            <span class="detail-value" id="detail-user-id">1</span>
+                            <span class="detail-value" id="detail-user-id">조회 중...</span>
                         </div>
                         <div class="detail-item">
                             <span class="detail-label">아이디</span>
-                            <span class="detail-value" id="detail-user-userid">user01</span>
+                            <span class="detail-value" id="detail-user-userid">조회 중...</span>
                         </div>
                         <div class="detail-item">
                             <span class="detail-label">이메일</span>
-                            <span class="detail-value" id="detail-user-email">user01@email.com</span>
+                            <span class="detail-value" id="detail-user-email">조회 중...</span>
                         </div>
                         <div class="detail-item">
                             <span class="detail-label">이름</span>
-                            <span class="detail-value" id="detail-user-name">홍길동</span>
+                            <span class="detail-value" id="detail-user-name">조회 중...</span>
                         </div>
                         <div class="detail-item">
                             <span class="detail-label">가입일</span>
-                            <span class="detail-value" id="detail-user-createdAt">2026-03-11</span>
+                            <span class="detail-value" id="detail-user-createdAt">조회 중...</span>
                         </div>
                         <div class="detail-item">
                             <span class="detail-label">최근 로그인</span>
-                            <span class="detail-value" id="detail-user-last-login">2026-03-15</span>
+                            <span class="detail-value" id="detail-user-last-login">조회 중...</span>
                         </div>
                     </div>
                 </section>
@@ -224,11 +232,11 @@
                         </div>
                         <div class="detail-item">
                             <span class="detail-label">플랜 시작일</span>
-                            <span class="detail-value" id="detail-user-plan-start">2026-03-01</span>
+                            <span class="detail-value" id="detail-user-plan-start">조회 중...</span>
                         </div>
                         <div class="detail-item">
                             <span class="detail-label">플랜 종료일</span>
-                            <span class="detail-value" id="detail-user-plan-end">2026-04-01</span>
+                            <span class="detail-value" id="detail-user-plan-end">조회 중...</span>
                         </div>
                     </div>
                 </section>
@@ -239,19 +247,19 @@
                     <div class="detail-grid">
                         <div class="detail-item">
                             <span class="detail-label">활성 상태</span>
-                            <span class="detail-value" id="detail-user-active">활성</span>
+                            <span class="detail-value" id="detail-user-active">조회 중...</span>
                         </div>
                         <div class="detail-item">
                             <span class="detail-label">잠금 상태</span>
-                            <span class="detail-value" id="detail-user-locked">정상</span>
+                            <span class="detail-value" id="detail-user-locked">조회 중...</span>
                         </div>
                         <div class="detail-item">
                             <span class="detail-label">탈퇴 상태</span>
-                            <span class="detail-value" id="detail-user-deleted">정상</span>
+                            <span class="detail-value" id="detail-user-deleted">조회 중...</span>
                         </div>
                         <div class="detail-item">
                             <span class="detail-label">상태 변경일</span>
-                            <span class="detail-value" id="detail-user-status-updated">2026-03-15</span>
+                            <span class="detail-value" id="detail-user-status-updated">조회 중...</span>
                         </div>
                     </div>
                 </section>
@@ -262,23 +270,23 @@
                     <div class="detail-grid">
                         <div class="detail-item">
                             <span class="detail-label">생성한 채팅방 수</span>
-                            <span class="detail-value" id="detail-user-chatrooms">12</span>
+                            <span class="detail-value" id="detail-user-chatrooms">조회 중...</span>
                         </div>
                         <div class="detail-item">
                             <span class="detail-label">총 메시지 수</span>
-                            <span class="detail-value" id="detail-user-messages">248</span>
+                            <span class="detail-value" id="detail-user-messages">조회 중...</span>
                         </div>
                         <div class="detail-item">
                             <span class="detail-label">이미지 생성 수</span>
-                            <span class="detail-value" id="detail-user-images">7</span>
+                            <span class="detail-value" id="detail-user-images">조회 중...</span>
                         </div>
                         <div class="detail-item">
                             <span class="detail-label">파일 업로드 수</span>
-                            <span class="detail-value" id="detail-user-files">3</span>
+                            <span class="detail-value" id="detail-user-files">조회 중...</span>
                         </div>
                         <div class="detail-item">
                             <span class="detail-label">최근 활동일</span>
-                            <span class="detail-value" id="detail-user-last-activity">2026-03-16</span>
+                            <span class="detail-value" id="detail-user-last-activity">조회 중...</span>
                         </div>
                     </div>
                 </section>
@@ -287,13 +295,10 @@
                 <section class="detail-section">
                     <h3>관리자 액션</h3>
                     <div id="detail-action-buttons">
-                        <button type="button" class="btn-action lock-btn" data-action="LOCK">
+                        <button type="button" class="btn-action lock-btn" id="detail-lock-btn" data-action="LOCK">
                             잠금
                         </button>
-                        <button type="button" class="btn-action inactive-btn" data-action="INACTIVE">
-                            비활성화
-                        </button>
-                        <button type="button" class="btn-action withdraw-btn" data-action="WITHDRAW">
+                        <button type="button" class="btn-action withdraw-btn" id="detail-withdraw-btn" data-action="WITHDRAW">
                             회원 탈퇴
                         </button>
                     </div>
