@@ -12,6 +12,8 @@ import com.example.prompt.repository.PlanModelRepository;
 import com.example.prompt.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
@@ -30,6 +32,10 @@ public class ChatService {
     private final ChatMessageRepository chatMessageRepository;
     private final UserRepository userRepository;
     private final PlanModelRepository planModelRepository;
+
+    @Lazy
+    @Autowired
+    private ChatService self;
 
     // Alan AI continue 청크 형식: {'type': 'continue', 'data': {'content': '텍스트'}}
     private static final String CONTENT_MARKER = "'content': '";
@@ -72,10 +78,15 @@ public class ChatService {
 
     /**
      * 메시지 목록 조회
-     * - 특정 채팅방의 메시지를 시간 순서대로 반환 (대화 내역)
+     * - userId 파라미터 추가 및 채팅방 소유자 검증 추가
+     * - 본인 채팅방의 메시지만 조회 가능
      */
     @Transactional(readOnly = true)
-    public List<ChatMessageDto.Response> getMessages(Long chatroomId) {
+    public List<ChatMessageDto.Response> getMessages(Long chatroomId, Long userId) {
+        ChatRoomEntity chatRoom = chatRoomRepository.findById(chatroomId)
+                .orElseThrow(() -> new IllegalArgumentException("채팅방을 찾을 수 없습니다"));
+        checkChatRoomOwner(chatRoom, userId);
+
         return chatMessageRepository
                 .findByChatroomIdAndDeletedAtIsNullOrderByCreatedAtAsc(chatroomId)
                 .stream()
@@ -138,8 +149,12 @@ public class ChatService {
                         },
                         // 에러 발생 시
                         error -> {
-                            log.info("streaming error = {}", error.getMessage());
-                            emitter.completeWithError(error);
+                            log.error("streaming error = {}", error.getMessage());
+                            try {
+                                emitter.completeWithError(error);
+                            } catch (Exception e) {
+                                log.warn("emitter 이미 닫힘 - chatroomId = {}", chatroomId);
+                            }
                         },
                         // 스트리밍 완료 시
                         () -> {
@@ -147,7 +162,8 @@ public class ChatService {
                             double multiplier = getTokenMultiplier(model);
                             int tokensUsed = (int) ((content.length() + aiMessage.length()) / 4 * multiplier);
 
-                            boolean exhausted = saveStreamResult(chatroomId, userId, aiMessage, tokensUsed, tokenLimit);
+                            // [BUG FIX] self.saveStreamResult() 호출: Spring 프록시를 통해 @Transactional 적용
+                            boolean exhausted = self.saveStreamResult(chatroomId, userId, aiMessage, tokensUsed, tokenLimit);
 
                             log.info("스트리밍 완료 chatroomId = {}, tokensUsed = {}", chatroomId, tokensUsed);
 
@@ -162,7 +178,11 @@ public class ChatService {
                                 }
                             }
 
-                            emitter.complete();
+                            try {
+                                emitter.complete();
+                            } catch (Exception e) {
+                                log.warn("emitter complete 실패 - chatroomId = {}", chatroomId);
+                            }
                         }
                 );
 
@@ -212,11 +232,33 @@ public class ChatService {
     }
 
     /**
+     * 스트리밍 완료 후 DB 저장 + 토큰 차감
+     * @Transactional 추가 + self.saveStreamResult()로 호출해야 적용됨
+     * - AI 메시지 저장과 토큰 차감이 하나의 트랜잭션에서 처리됨
+     *
+     * @return 토큰 한도 도달 여부
+     */
+    @Transactional
+    public boolean saveStreamResult(Long chatroomId, Long userId, String aiMessage, int tokensUsed, int tokenLimit) {
+        chatMessageRepository.save(
+                ChatMessageEntity.of(chatroomId, "assistant", aiMessage, tokensUsed));
+
+        UserEntity freshUser = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다"));
+
+        int newUsed = Math.min(freshUser.getUsedToken() + tokensUsed, tokenLimit);
+        freshUser.setUsedToken(newUsed);
+        userRepository.save(freshUser);
+
+        log.info("토큰 차감 완료 - userId = {}, tokensUsed = {}, usedToken = {}/{}", userId, tokensUsed, newUsed, tokenLimit);
+        return newUsed >= tokenLimit;
+    }
+
+    /**
      * Alan AI continue 청크에서 순수 텍스트 추출
      *
      * 청크 형식: {'type': 'continue', 'data': {'content': '텍스트'}}
-     * - continue 타입만 처리 (complete 타입은 무시 - continue 누적으로 전체 텍스트 완성됨)
-     * - continue 청크는 1~5자 단위의 짧은 조각이므로 apostrophe 파싱 문제 없음
+     * - continue 타입만 처리 (complete 타입은 무시)
      */
     private String extractContinueContent(String chunk) {
         if (chunk == null || chunk.isBlank()) return null;
@@ -252,26 +294,6 @@ public class ChatService {
             case "alan-4.1"     -> 1.5;
             default             -> 1.0;
         };
-    }
-
-    /**
-     * 스트리밍 완료 후 DB 저장 + 토큰 차감
-     * reactor 스레드에서 호출 - 각 Repository 메서드가 자체 트랜잭션으로 처리
-     * @return 토큰 한도 도달 여부
-     */
-    public boolean saveStreamResult(Long chatroomId, Long userId, String aiMessage, int tokensUsed, int tokenLimit) {
-        chatMessageRepository.save(
-                ChatMessageEntity.of(chatroomId, "assistant", aiMessage, tokensUsed));
-
-        UserEntity freshUser = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다"));
-
-        int newUsed = Math.min(freshUser.getUsedToken() + tokensUsed, tokenLimit);
-        freshUser.setUsedToken(newUsed);
-        userRepository.save(freshUser);
-
-        log.info("토큰 차감 완료 - userId = {}, tokensUsed = {}, usedToken = {}/{}", userId, tokensUsed, newUsed, tokenLimit);
-        return newUsed >= tokenLimit;
     }
 
     /**

@@ -48,12 +48,14 @@ public class ChatController {
     /**
      * 메시지 목록 조회 (대화 내역)
      * GET "http://localhost:8080/api/chat/rooms/1/messages"
+     * @AuthenticationPrincipal 추가: 타인 채팅 내역 조회 보안 버그 수정
      */
     @GetMapping("/rooms/{chatroomId}/messages")
     public ResponseEntity<List<ChatMessageDto.Response>> getMessages(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable Long chatroomId
     ) {
-        return ResponseEntity.ok(chatService.getMessages(chatroomId));
+        return ResponseEntity.ok(chatService.getMessages(chatroomId, userDetails.getId()));
     }
 
     /**
