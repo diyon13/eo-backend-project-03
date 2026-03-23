@@ -13,6 +13,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.example.prompt.dto.common.enums.AdminUserActionType;
@@ -35,6 +36,7 @@ public class AdminServiceImpl implements AdminService {
     private final JwtProvider jwtProvider;
     private final PlanRepository planRepository;
     private final AdminActionLogRepository adminActionLogRepository;
+    private final PasswordEncoder passwordEncoder;
 
     /**
      * 관리자 로그인
@@ -50,7 +52,7 @@ public class AdminServiceImpl implements AdminService {
                     return new IllegalArgumentException("관리자 아이디가 존재하지 않습니다.");
                 });
 
-        if (!admin.getPassword().equals(request.getPassword())) {
+        if (!passwordEncoder.matches(request.getPassword(), admin.getPassword())) {
             log.warn("관리자 로그인 실패 - 비밀번호 불일치, adminId = {}", request.getAdminId());
             throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
         }

@@ -59,12 +59,15 @@
                  id="plan-normal"
                  th:classappend="${myInfo != null and myInfo.planName == 'NORMAL'} ? ' current' : ''">
                 <div th:if="${myInfo != null and myInfo.planName == 'NORMAL'}"><span>현재 사용 중</span></div>
-                <h2>NORMAL</h2>
+                <h2 th:text="${plan.planName}">NORMAL</h2>
                 <div>
-                    <strong>무료</strong>
+                    <strong th:text="${plan.price == 0 ? '무료' : #numbers.formatInteger(plan.price, 0, 'COMMA')}">무료</strong>
+                    <span th:if="${plan.price != 0}">원 / 월</span>
                 </div>
                 <ul>
-                    <li>토큰 10,000개 / 월</li>
+                    <li th:text="|토큰 ${#numbers.formatInteger(plan.tokenLimit, 0, 'COMMA')}개 / 월|">
+                        토큰 10,000개 / 월
+                    </li>
                     <li>알랜 4.0.1 모델 사용</li>
                     <li>기본 AI 대화</li>
                     <li>이미지 분석</li>
@@ -80,13 +83,15 @@
                  th:classappend="${myInfo != null and myInfo.planName == 'PRO'} ? ' current' : ''">
                 <div><span>인기</span></div>
                 <div th:if="${myInfo != null and myInfo.planName == 'PRO'}"><span>현재 사용 중</span></div>
-                <h2>PRO</h2>
+                <h2 th:text="${plan.planName}">PRO</h2>
                 <div>
-                    <strong>9,900</strong>
+                    <strong th:text="${#numbers.formatInteger(plan.price, 0, 'COMMA')}">9,900</strong>
                     <span>원 / 월</span>
                 </div>
                 <ul>
-                    <li>토큰 50,000개 / 월</li>
+                    <li th:text="|토큰 ${#numbers.formatInteger(plan.tokenLimit, 0, 'COMMA')}개 / 월|">
+                        토큰 50,000개 / 월
+                    </li>
                     <li>알랜 4.0.2 모델 사용</li>
                     <li>고급 AI 대화</li>
                     <li>이미지 분석</li>
@@ -103,13 +108,15 @@
                  id="plan-max"
                  th:classappend="${myInfo != null and myInfo.planName == 'MAX'} ? ' current' : ''">
                 <div th:if="${myInfo != null and myInfo.planName == 'MAX'}"><span>현재 사용 중</span></div>
-                <h2>MAX</h2>
+                <h2 th:text="${plan.planName}">MAX</h2>
                 <div>
-                    <strong>19,900</strong>
+                    <strong th:text="${#numbers.formatInteger(plan.price, 0, 'COMMA')}">19,900</strong>
                     <span>원 / 월</span>
                 </div>
                 <ul>
-                    <li>토큰 150,000개 / 월</li>
+                    <li th:text="|토큰 ${#numbers.formatInteger(plan.tokenLimit, 0, 'COMMA')}개 / 월|">
+                        토큰 150,000개 / 월
+                    </li>
                     <li>알랜 4.0.3 모델 사용</li>
                     <li>최상위 AI 대화</li>
                     <li>이미지 분석</li>
