@@ -6,17 +6,17 @@ import com.example.prompt.dto.chat.ChatMessageDto;
 import com.example.prompt.dto.chat.ChatRoomDto;
 import com.example.prompt.security.CustomUserDetails;
 import com.example.prompt.service.ChatService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import tools.jackson.databind.ObjectMapper;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -36,8 +36,7 @@ class ChatControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     // ChatService 만 Mock 으로 교체 (나머지는 실제 빈 사용)
     @MockitoBean
@@ -169,8 +168,7 @@ class ChatControllerTest {
                         .chatId(2L).role("assistant").content("안녕하세요! 무엇을 도와드릴까요?")
                         .tokensUsed(10).createdAt(LocalDateTime.now()).build()
         );
-
-        given(chatService.getMessages(1L)).willReturn(messages);
+        given(chatService.getMessages(anyLong(), anyLong())).willReturn(messages);
 
         log.info("메시지 목록 조회 요청 - GET /api/chat/rooms/1/messages");
 

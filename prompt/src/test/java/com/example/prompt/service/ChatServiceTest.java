@@ -153,11 +153,10 @@ class ChatServiceTest {
     @Test
     @DisplayName("메시지 목록 조회 - 성공")
     void testGetMessages() {
-
+        given(chatRoomRepository.findById(1L)).willReturn(Optional.of(chatRoom));
         given(chatMessageRepository.findByChatroomIdAndDeletedAtIsNullOrderByCreatedAtAsc(1L))
                 .willReturn(List.of());
-
-        List<ChatMessageDto.Response> result = chatService.getMessages(1L);
+        List<ChatMessageDto.Response> result = chatService.getMessages(1L, 1L);
 
         assertThat(result).isNotNull();
         assertThat(result).isEmpty();

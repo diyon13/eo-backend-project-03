@@ -88,6 +88,7 @@ class SecurityConfiguration {
 
     /**
      * 관리자 페이지 접근을 위한 Security 체인
+     * - ADMIN 권한이 없으면 로그인 페이지로 리다이렉트
      */
     @Bean
     @Order(2)
@@ -103,6 +104,10 @@ class SecurityConfiguration {
                                 "/images/**",
                                 "/favicon.ico"
                         ).permitAll()
+<<<<<<< main
+=======
+                        // 일반 유저 어드민 대쉬보드 로그인불가
+>>>>>>> main
                         .requestMatchers("/admin", "/admin/**").hasAuthority("ADMIN")
                         .anyRequest().authenticated()
                 )
