@@ -297,6 +297,8 @@ public class AdminServiceImpl implements AdminService {
                 user.setActive(false);
                 user.setLocked(false);
             }
+
+            default -> throw new IllegalArgumentException("지원하지 않는 상태 변경 요청입니다. action=" + action);
         }
 
         user.setUpdatedAt(LocalDateTime.now());
