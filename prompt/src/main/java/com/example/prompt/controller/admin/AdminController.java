@@ -176,9 +176,11 @@ public class AdminController {
             @RequestParam(required = false, defaultValue = "") String actionType,
             @RequestParam(required = false, defaultValue = "") String startDate,
             @RequestParam(required = false, defaultValue = "") String endDate,
-            @PageableDefault(size = 10) Pageable pageable,
+            @RequestParam(defaultValue = "0") int page,
             Model model
     ) {
+        Pageable pageable = PageRequest.of(page, 10, Sort.by(Sort.Direction.DESC, "createdAt"));
+
         Page<AdminActionLogDto> logs =
                 adminService.getAdminActionLogs(adminId, actionType, startDate, endDate, pageable);
 

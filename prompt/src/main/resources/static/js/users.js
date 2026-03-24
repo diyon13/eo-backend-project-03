@@ -56,6 +56,31 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
+    function fillText(id, value) {
+        const element = document.getElementById(id);
+        if (element) {
+            element.textContent = value ?? "-";
+        }
+    }
+
+    function formatDateTime(value) {
+        if (!value) return "-";
+
+        const date = new Date(value);
+
+        if (isNaN(date.getTime())) {
+            return value;
+        }
+
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const day = String(date.getDate()).padStart(2, "0");
+        const hours = String(date.getHours()).padStart(2, "0");
+        const minutes = String(date.getMinutes()).padStart(2, "0");
+
+        return `${year}-${month}-${day} ${hours}:${minutes}`;
+    }
+
     function clearActionButtonSelection() {
         actionButtons.forEach(function (button) {
             button.classList.remove("selected-action");
@@ -73,9 +98,12 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     function renderDetailStatusTexts(data) {
-        fillText("detail-user-active", data.active ? "활성" : "탈퇴");
-        fillText("detail-user-locked", data.locked ? "잠금" : "정상");
-        fillText("detail-user-deleted", data.active ? "정상" : "탈퇴");
+        const isWithdrawn = !data.active;
+        const isLocked = data.active && data.locked;
+
+        fillText("detail-user-active", isWithdrawn ? "탈퇴" : "활성");
+        fillText("detail-user-locked", isLocked ? "잠금" : "정상");
+        fillText("detail-user-deleted", isWithdrawn ? "탈퇴" : "정상");
     }
 
     function updateActionButtonsByState(data) {
@@ -83,14 +111,23 @@ document.addEventListener("DOMContentLoaded", function () {
         const withdrawBtn = document.getElementById("detail-withdraw-btn");
 
         if (lockBtn) {
-            if (data.locked) {
+            lockBtn.dataset.userId = data.id;
+
+            if (!data.active) {
+                lockBtn.dataset.action = "";
+                lockBtn.textContent = "잠금";
+                lockBtn.className = "btn-action lock-btn";
+                lockBtn.disabled = true;
+            } else if (data.locked) {
                 lockBtn.dataset.action = "UNLOCK";
                 lockBtn.textContent = "잠금해제";
                 lockBtn.className = "btn-action unlock-btn";
+                lockBtn.disabled = false;
             } else {
                 lockBtn.dataset.action = "LOCK";
                 lockBtn.textContent = "잠금";
                 lockBtn.className = "btn-action lock-btn";
+                lockBtn.disabled = false;
             }
         }
 
@@ -118,22 +155,22 @@ document.addEventListener("DOMContentLoaded", function () {
         fillText("detail-user-userid", data.userid);
         fillText("detail-user-email", data.email);
         fillText("detail-user-name", data.username ?? data.name);
-        fillText("detail-user-createdAt", data.createdAt);
-        fillText("detail-user-last-login", data.lastLoginAt);
+        fillText("detail-user-createdAt", formatDateTime(data.createdAt));
+        fillText("detail-user-last-login", formatDateTime(data.lastLoginAt));
 
         planSelect.value = data.planName ?? "NORMAL";
 
-        fillText("detail-user-plan-start", data.planStartedAt);
-        fillText("detail-user-plan-end", data.planExpiredAt);
+        fillText("detail-user-plan-start", formatDateTime(data.planStartedAt));
+        fillText("detail-user-plan-end", formatDateTime(data.planExpiredAt));
 
         renderDetailStatusTexts(data);
-        fillText("detail-user-status-updated", data.statusUpdatedAt);
+        fillText("detail-user-status-updated", formatDateTime(data.statusUpdatedAt));
 
         fillText("detail-user-chatrooms", data.chatRoomCount ?? 0);
         fillText("detail-user-messages", data.messageCount ?? 0);
         fillText("detail-user-images", data.imageCount ?? 0);
         fillText("detail-user-files", data.fileCount ?? 0);
-        fillText("detail-user-last-activity", data.lastActivityAt);
+        fillText("detail-user-last-activity", formatDateTime(data.lastActivityAt));
 
         targetUserIdInput.value = data.id ?? "";
 
@@ -283,6 +320,38 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     });
 
+    function buildUpdatedRowData(row, userId, action) {
+        const currentIsDeleted = !!row.querySelector(".status.deleted");
+        const currentIsLocked = !!row.querySelector(".status.locked");
+
+        let active = !currentIsDeleted;
+        let locked = currentIsLocked;
+
+        switch (action) {
+            case "LOCK":
+                locked = true;
+                break;
+            case "UNLOCK":
+                locked = false;
+                break;
+            case "WITHDRAW":
+                active = false;
+                locked = false;
+                break;
+            case "RESTORE":
+                active = true;
+                locked = false;
+                break;
+        }
+
+        return {
+            id: Number(userId),
+            active,
+            locked,
+            planName: row.children[2]?.textContent?.trim() || "-"
+        };
+    }
+
     rowActionButtons.forEach(function (button) {
         button.addEventListener("click", async function () {
             const userId = this.dataset.userId;
@@ -316,17 +385,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 const row = findUserRow(userId);
 
                 if (row) {
-                    const updatedData = {
-                        id: userId,
-                        active: action === "WITHDRAW" ? false : action === "RESTORE" ? true : !row.querySelector(".status.deleted"),
-                        locked: action === "LOCK" ? true : action === "UNLOCK" ? false : !!row.querySelector(".status.locked"),
-                        planName: row.children[2]?.textContent?.trim() || "-"
-                    };
-
-                    if (action === "WITHDRAW") {
-                        updatedData.locked = false;
-                    }
-
+                    const updatedData = buildUpdatedRowData(row, userId, action);
                     updateRowView(row, updatedData);
                 }
 
@@ -387,9 +446,11 @@ document.addEventListener("DOMContentLoaded", function () {
                 pendingAction = "UNLOCK";
             } else if (action === "WITHDRAW") {
                 currentDetailData.active = false;
+                currentDetailData.locked = false;
                 pendingAction = "WITHDRAW";
             } else if (action === "RESTORE") {
                 currentDetailData.active = true;
+                currentDetailData.locked = false;
                 pendingAction = "RESTORE";
             }
 
