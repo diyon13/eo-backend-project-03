@@ -4,10 +4,15 @@ import com.example.prompt.client.AlanAiClient;
 import com.example.prompt.domain.UserEntity;
 import com.example.prompt.dto.alan.AlanAiDto;
 import com.example.prompt.repository.UserRepository;
+import com.example.prompt.util.WebPageFetcher;
+import com.example.prompt.util.YouTubeSubtitleFetcher;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Arrays;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -16,9 +21,11 @@ public class AlanAiService {
 
     private final AlanAiClient alanAiClient;
     private final UserRepository userRepository;
+    private final WebPageFetcher webPageFetcher;
+    private final YouTubeSubtitleFetcher youTubeSubtitleFetcher;
 
     /**
-     * 페이지 요약
+     * 페이지 요약 - 텍스트 직접 입력
      */
     @Transactional
     public AlanAiDto.PageSummaryResponse summarizePage(AlanAiDto.PageSummaryRequest request, Long userId) {
@@ -32,7 +39,6 @@ public class AlanAiService {
 
         String result = alanAiClient.summarizePage(request.getContent());
 
-        // 입력 + 결과 길이 기준으로 토큰 차감
         int tokensUsed = (request.getContent().length() + (result != null ? result.length() : 0)) / 4;
         deductToken(user, tokensUsed);
         log.info("페이지 요약 토큰 차감 - userId = {}, tokensUsed = {}", userId, tokensUsed);
@@ -43,7 +49,33 @@ public class AlanAiService {
     }
 
     /**
-     * 페이지 번역
+     * 페이지 요약 - URL 입력
+     * URL → 본문 텍스트 추출 → Alan AI 요약
+     */
+    @Transactional
+    public AlanAiDto.PageSummaryResponse summarizePageByUrl(AlanAiDto.PageSummaryByUrlRequest request, Long userId) {
+        log.info("페이지 URL 요약 서비스 호출 - userId = {}, url = {}", userId, request.getUrl());
+
+        if (request.getUrl() == null || request.getUrl().isBlank()) {
+            throw new IllegalArgumentException("URL을 입력해주세요.");
+        }
+
+        UserEntity user = checkAndGetUser(userId);
+
+        String content = webPageFetcher.fetchPageText(request.getUrl());
+        String result = alanAiClient.summarizePage(content);
+
+        int tokensUsed = (content.length() + (result != null ? result.length() : 0)) / 4;
+        deductToken(user, tokensUsed);
+        log.info("페이지 URL 요약 토큰 차감 - userId = {}, tokensUsed = {}", userId, tokensUsed);
+
+        return AlanAiDto.PageSummaryResponse.builder()
+                .summary(result)
+                .build();
+    }
+
+    /**
+     * 페이지 번역 - 텍스트 직접 입력
      */
     @Transactional
     public AlanAiDto.PageTranslateResponse translatePage(AlanAiDto.PageTranslateRequest request, Long userId) {
@@ -57,7 +89,6 @@ public class AlanAiService {
 
         String result = alanAiClient.translatePage(request);
 
-        // 입력 전체 길이 + 결과 길이 기준으로 토큰 차감
         int inputLength = request.getContents().stream().mapToInt(String::length).sum();
         int tokensUsed = (inputLength + (result != null ? result.length() : 0)) / 4;
         deductToken(user, tokensUsed);
@@ -69,7 +100,39 @@ public class AlanAiService {
     }
 
     /**
-     * 유튜브 자막 요약
+     * 페이지 번역 - URL 입력
+     * URL → 본문 텍스트 추출 → 단락 분리 → Alan AI 번역
+     */
+    @Transactional
+    public AlanAiDto.PageTranslateResponse translatePageByUrl(AlanAiDto.PageTranslateByUrlRequest request, Long userId) {
+        log.info("페이지 URL 번역 서비스 호출 - userId = {}, url = {}", userId, request.getUrl());
+
+        if (request.getUrl() == null || request.getUrl().isBlank()) {
+            throw new IllegalArgumentException("URL을 입력해주세요.");
+        }
+
+        UserEntity user = checkAndGetUser(userId);
+
+        // URL에서 텍스트 추출 후 단락 단위로 분리
+        String content = webPageFetcher.fetchPageText(request.getUrl());
+        List<String> contents = Arrays.stream(content.split("\n\n"))
+                .filter(s -> !s.isBlank())
+                .toList();
+
+        AlanAiDto.PageTranslateRequest translateRequest = new AlanAiDto.PageTranslateRequest(contents);
+        String result = alanAiClient.translatePage(translateRequest);
+
+        int tokensUsed = (content.length() + (result != null ? result.length() : 0)) / 4;
+        deductToken(user, tokensUsed);
+        log.info("페이지 URL 번역 토큰 차감 - userId = {}, tokensUsed = {}", userId, tokensUsed);
+
+        return AlanAiDto.PageTranslateResponse.builder()
+                .translated(result)
+                .build();
+    }
+
+    /**
+     * 유튜브 자막 요약 - 직접 입력
      */
     @Transactional
     public AlanAiDto.YoutubeSubtitleResponse summarizeYoutube(AlanAiDto.YoutubeSubtitleRequest request, Long userId) {
@@ -83,7 +146,6 @@ public class AlanAiService {
 
         AlanAiDto.YoutubeSubtitleResponse result = alanAiClient.summarizeYoutube(request);
 
-        // 입력 자막 전체 글자 수 기준으로 토큰 차감
         int inputLength = request.getSubtitle().stream()
                 .flatMap(chapter -> chapter.getText().stream())
                 .mapToInt(text -> text.getContent().length())
@@ -95,6 +157,35 @@ public class AlanAiService {
         return result;
     }
 
+    /**
+     * 유튜브 URL 자막 자동 추출 후 요약
+     */
+    @Transactional
+    public AlanAiDto.YoutubeSubtitleResponse summarizeYoutubeByUrl(AlanAiDto.YoutubeUrlRequest request, Long userId) {
+        log.info("유튜브 URL 요약 서비스 호출 - userId = {}, url = {}", userId, request.getUrl());
+
+        if (request.getUrl() == null || request.getUrl().isBlank()) {
+            throw new IllegalArgumentException("YouTube URL을 입력해주세요.");
+        }
+
+        UserEntity user = checkAndGetUser(userId);
+
+        // YouTube URL에서 자막 자동 추출
+        AlanAiDto.YoutubeSubtitleRequest subtitleRequest = youTubeSubtitleFetcher.fetchSubtitles(request.getUrl());
+        log.info("자막 추출 완료 - userId = {}, 챕터 수 = {}", userId, subtitleRequest.getSubtitle().size());
+
+        AlanAiDto.YoutubeSubtitleResponse result = alanAiClient.summarizeYoutube(subtitleRequest);
+
+        int inputLength = subtitleRequest.getSubtitle().stream()
+                .flatMap(chapter -> chapter.getText().stream())
+                .mapToInt(text -> text.getContent().length())
+                .sum();
+        int tokensUsed = inputLength / 4;
+        deductToken(user, tokensUsed);
+        log.info("유튜브 URL 요약 토큰 차감 - userId = {}, tokensUsed = {}", userId, tokensUsed);
+
+        return result;
+    }
 
     /**
      * 일반 질문 (단순 응답)
@@ -110,9 +201,6 @@ public class AlanAiService {
         UserEntity user = checkAndGetUser(userId);
 
         String raw = alanAiClient.question(request.getContent());
-
-        // Alan AI 응답 형식: {"action":{...},"content":"실제 답변"}
-        // content 필드만 추출해서 순수 텍스트로 반환
         String answer = extractAnswerContent(raw);
 
         int tokensUsed = (request.getContent().length() + (answer != null ? answer.length() : 0)) / 4;
@@ -135,7 +223,6 @@ public class AlanAiService {
             throw new IllegalArgumentException("질문 내용을 입력해주세요.");
         }
 
-        // 토큰 한도 체크만 수행 (차감은 스트리밍 완료 후 불가 → 입력 기준으로 선차감)
         UserEntity user = checkAndGetUser(userId);
         int estimatedTokens = request.getContent().length() / 4;
         deductToken(user, estimatedTokens);
@@ -145,7 +232,6 @@ public class AlanAiService {
 
     /**
      * Alan AI question 응답에서 content 필드 추출
-     * 응답 형식: {"action":{"name":"...","speak":"..."},"content":"실제 답변"}
      */
     private String extractAnswerContent(String raw) {
         if (raw == null || raw.isBlank()) return "";
@@ -154,7 +240,6 @@ public class AlanAiService {
             if (idx == -1) return raw;
             int start = raw.indexOf("\"", idx + 10) + 1;
             if (start <= 0) return raw;
-            // 닫는 " 탐색 (이스케이프 처리)
             int end = start;
             while (end < raw.length()) {
                 char c = raw.charAt(end);
@@ -172,9 +257,6 @@ public class AlanAiService {
         }
     }
 
-    /**
-     * 토큰 한도 체크 후 유저 반환
-     */
     private UserEntity checkAndGetUser(Long userId) {
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
@@ -190,12 +272,9 @@ public class AlanAiService {
         return user;
     }
 
-    /**
-     * 토큰 차감 (한도 초과 방지: 남은 토큰까지만 차감)
-     */
     private void deductToken(UserEntity user, int tokensUsed) {
-        int tokenLimit  = user.getPlan().getTokenLimit();
-        int newUsed     = Math.min(user.getUsedToken() + tokensUsed, tokenLimit);
+        int tokenLimit = user.getPlan().getTokenLimit();
+        int newUsed    = Math.min(user.getUsedToken() + tokensUsed, tokenLimit);
         user.setUsedToken(newUsed);
         userRepository.save(user);
     }

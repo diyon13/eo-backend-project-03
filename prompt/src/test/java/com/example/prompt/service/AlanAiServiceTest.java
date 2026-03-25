@@ -99,10 +99,10 @@ class AlanAiServiceTest {
      */
     @Test
     void testSummarizeYoutube() {
-        AlanAiDto.YoutubeSubtitleRequest.SubtitleText t1 =
-                new AlanAiDto.YoutubeSubtitleRequest.SubtitleText("0:00", "오늘은 자바 스트림 API에 대해 알아봅니다.");
-        AlanAiDto.YoutubeSubtitleRequest.SubtitleText t2 =
-                new AlanAiDto.YoutubeSubtitleRequest.SubtitleText("0:15", "filter, map, reduce 등의 연산을 체이닝해서 사용합니다.");
+        AlanAiDto.YoutubeSubtitleRequest.Chapter.SubtitleText t1 =
+                new AlanAiDto.YoutubeSubtitleRequest.Chapter.SubtitleText("0:00", "오늘은 자바 스트림 API에 대해 알아봅니다.");
+        AlanAiDto.YoutubeSubtitleRequest.Chapter.SubtitleText t2 =
+                new AlanAiDto.YoutubeSubtitleRequest.Chapter.SubtitleText("0:15", "filter, map, reduce 등의 연산을 체이닝해서 사용합니다.");
 
         AlanAiDto.YoutubeSubtitleRequest.Chapter chapter =
                 new AlanAiDto.YoutubeSubtitleRequest.Chapter(0, "자바 스트림 API", List.of(t1, t2));

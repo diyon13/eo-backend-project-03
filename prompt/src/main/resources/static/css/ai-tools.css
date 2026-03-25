@@ -291,3 +291,46 @@ main {
 
 #toast.show       { opacity: 1; transform: translateX(-50%) translateY(0); }
 #toast.show.error { background-color: var(--danger); }
+/* URL 입력 필드 */
+.urlInput {
+    margin: 6px 14px 0;
+    padding: 10px 14px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.15s;
+    flex-shrink: 0;
+}
+
+.urlInput::placeholder {
+    color: var(--text-muted);
+}
+
+.urlInput:focus {
+    border-color: var(--accent);
+}
+
+/* 구분선 힌트 */
+.hintDivider {
+    position: relative;
+    text-align: center;
+    margin: 10px 14px 0;
+    padding: 0 36px;
+}
+
+.hintDivider::before,
+.hintDivider::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    width: 30%;
+    height: 1px;
+    background: var(--border);
+}
+
+.hintDivider::before { left: 0; }
+.hintDivider::after  { right: 0; }

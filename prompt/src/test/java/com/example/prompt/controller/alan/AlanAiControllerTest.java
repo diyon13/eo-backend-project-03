@@ -92,8 +92,9 @@ class AlanAiControllerTest {
      */
     @Test
     void testSummarizeYoutube() {
-        AlanAiDto.YoutubeSubtitleRequest.SubtitleText text =
-                new AlanAiDto.YoutubeSubtitleRequest.SubtitleText("0:00", "테스트 자막");
+        // SubtitleText는 Chapter의 inner class → Chapter.SubtitleText로 접근
+        AlanAiDto.YoutubeSubtitleRequest.Chapter.SubtitleText text =
+                new AlanAiDto.YoutubeSubtitleRequest.Chapter.SubtitleText("0:00", "테스트 자막");
         AlanAiDto.YoutubeSubtitleRequest.Chapter chapter =
                 new AlanAiDto.YoutubeSubtitleRequest.Chapter(0, "테스트 챕터", List.of(text));
         AlanAiDto.YoutubeSubtitleRequest request =

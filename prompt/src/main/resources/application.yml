@@ -14,7 +14,7 @@ spring:
 
   h2:
     console:
-      enabled: true
+      enabled: false
       path: /h2-console
 
   jpa:
@@ -30,8 +30,8 @@ spring:
         format_sql: true
 
   thymeleaf:
-    prefix: file:src/main/resources/templates/
-    cache: false
+    prefix: classpath:/templates/
+    cache: true
 
   data:
     web:

@@ -42,6 +42,29 @@ public class AlanAiDto {
     public static class PageTranslateResponse {
         private String translated;
     }
+    // 페이지 요약 - URL 입력
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class PageSummaryByUrlRequest {
+        private String url;
+    }
+
+    // 페이지 번역 - URL 입력
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class PageTranslateByUrlRequest {
+        private String url;
+    }
+
+    // 유튜브 URL 요청 (추가)
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class YoutubeUrlRequest {
+        private String url;
+    }
 
     // 유튜브 자막 요약
     @Getter
@@ -62,14 +85,14 @@ public class AlanAiDto {
             private String chapterTitle;
 
             private List<SubtitleText> text;
-        }
 
-        @Getter
-        @NoArgsConstructor
-        @AllArgsConstructor
-        public static class SubtitleText {
-            private String timestamp;
-            private String content;
+            @Getter
+            @NoArgsConstructor
+            @AllArgsConstructor
+            public static class SubtitleText {
+                private String timestamp;
+                private String content;
+            }
         }
     }
 

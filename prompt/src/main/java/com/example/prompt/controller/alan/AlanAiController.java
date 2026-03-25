@@ -35,6 +35,19 @@ public class AlanAiController {
     }
 
     /**
+     * 페이지 요약 - URL 입력
+     * POST "http://localhost:8080/api/alan/page/summary/url"
+     * Body: { "url": "https://example.com/article" }
+     */
+    @PostMapping("/page/summary/url")
+    public ApiResponse<AlanAiDto.PageSummaryResponse> summarizePageByUrl(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestBody AlanAiDto.PageSummaryByUrlRequest request
+    ) {
+        return ApiResponse.ok(alanAiService.summarizePageByUrl(request, userDetails.getId()));
+    }
+
+    /**
      * 페이지 번역
      * POST "http://localhost:8080/api/alan/page/translate"
      * Body: { "contents": ["번역할 텍스트1", "번역할 텍스트2"] }
@@ -48,9 +61,21 @@ public class AlanAiController {
     }
 
     /**
-     * 유튜브 자막 요약
+     * 페이지 번역 - URL 입력
+     * POST "http://localhost:8080/api/alan/page/translate/url"
+     * Body: { "url": "https://example.com/article" }
+     */
+    @PostMapping("/page/translate/url")
+    public ApiResponse<AlanAiDto.PageTranslateResponse> translatePageByUrl(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestBody AlanAiDto.PageTranslateByUrlRequest request
+    ) {
+        return ApiResponse.ok(alanAiService.translatePageByUrl(request, userDetails.getId()));
+    }
+
+    /**
+     * 유튜브 자막 직접 입력 요약
      * POST "http://localhost:8080/api/alan/youtube/summary"
-     * Body: { "subtitle": [{ "chapterIdx": 0, "chapterTitle": "제목", "text": [{ "timestamp": "0:00", "content": "내용" }] }] }
      */
     @PostMapping("/youtube/summary")
     public ApiResponse<AlanAiDto.YoutubeSubtitleResponse> summarizeYoutube(
@@ -58,6 +83,19 @@ public class AlanAiController {
             @RequestBody AlanAiDto.YoutubeSubtitleRequest request
     ) {
         return ApiResponse.ok(alanAiService.summarizeYoutube(request, userDetails.getId()));
+    }
+
+    /**
+     * 유튜브 URL로 자막 자동 추출 후 요약
+     * POST "http://localhost:8080/api/alan/youtube/url"
+     * Body: { "url": "https://www.youtube.com/watch?v=xxxxx" }
+     */
+    @PostMapping("/youtube/url")
+    public ApiResponse<AlanAiDto.YoutubeSubtitleResponse> summarizeYoutubeByUrl(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestBody AlanAiDto.YoutubeUrlRequest request
+    ) {
+        return ApiResponse.ok(alanAiService.summarizeYoutubeByUrl(request, userDetails.getId()));
     }
 
     /**
@@ -85,5 +123,4 @@ public class AlanAiController {
         AlanAiDto.QuestionRequest request = new AlanAiDto.QuestionRequest(content);
         return alanAiService.plainStreaming(request, userDetails.getId());
     }
-
 }

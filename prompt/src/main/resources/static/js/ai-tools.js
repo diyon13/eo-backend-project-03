@@ -10,7 +10,7 @@ window.addEventListener('DOMContentLoaded', function () {
     const typeConfig = {
         summary:   { tabId: 'summary',   inputId: 'summaryInput',   resultId: 'summaryResult',   textId: 'summaryResultText',   label: '요약' },
         translate: { tabId: 'translate', inputId: 'translateInput', resultId: 'translateResult', textId: 'translateResultText', label: '번역' },
-        youtube:   { tabId: 'youtube',   inputId: 'youtubeInput',   resultId: 'youtubeResult',   textId: 'youtubeResultText',   label: '유튜브' },
+        youtube:   { tabId: 'youtube',   inputId: 'youtubeUrlInput', resultId: 'youtubeResult',   textId: 'youtubeResultText',   label: '유튜브' },
         question:  { tabId: 'question',  inputId: 'questionInput',  resultId: 'questionResult',  textId: 'questionResultText',  label: '질문' }
     };
 
@@ -105,7 +105,6 @@ window.addEventListener('DOMContentLoaded', function () {
     [
         ['summaryInput',   'summaryCount'],
         ['translateInput', 'translateCount'],
-        ['youtubeInput',   'youtubeCount'],
         ['questionInput',  'questionCount']
     ].forEach(function (pair) {
         const textarea = document.getElementById(pair[0]);
@@ -115,8 +114,8 @@ window.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    // 초기화 버튼
-    document.querySelectorAll('.clearBtn').forEach(function (btn) {
+    // 초기화 버튼 - data-clear 속성이 있는 버튼(질문 탭)은 공통 처리
+    document.querySelectorAll('.clearBtn[data-clear]').forEach(function (btn) {
         btn.addEventListener('click', function () {
             btn.dataset.clear.split(' ').forEach(function (id) {
                 const el = document.getElementById(id);
@@ -127,6 +126,29 @@ window.addEventListener('DOMContentLoaded', function () {
             });
         });
     });
+
+    // 초기화 버튼 - 요약 (URL + 텍스트 + 결과 함께)
+    document.getElementById('summaryClearBtn').addEventListener('click', function () {
+        document.getElementById('summaryUrlInput').value = '';
+        document.getElementById('summaryInput').value    = '';
+        document.getElementById('summaryCount').textContent = '0자';
+        document.getElementById('summaryResult').classList.add('hidden');
+    });
+
+    // 초기화 버튼 - 번역
+    document.getElementById('translateClearBtn').addEventListener('click', function () {
+        document.getElementById('translateUrlInput').value = '';
+        document.getElementById('translateInput').value    = '';
+        document.getElementById('translateCount').textContent = '0자';
+        document.getElementById('translateResult').classList.add('hidden');
+    });
+
+    // 초기화 버튼 - 유튜브
+    document.getElementById('youtubeClearBtn').addEventListener('click', function () {
+        document.getElementById('youtubeUrlInput').value = '';
+        document.getElementById('youtubeResult').classList.add('hidden');
+    });
+
 
     // 복사 버튼
     document.querySelectorAll('.copyBtn').forEach(function (btn) {
@@ -146,17 +168,24 @@ window.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    // 페이지 요약 POST /api/alan/page/summary
+    // 페이지 요약
+    // URL 입력 시 → POST /api/alan/page/summary/url
+    // 텍스트 입력 시 → POST /api/alan/page/summary
     document.getElementById('summaryBtn').addEventListener('click', function () {
+        const url     = document.getElementById('summaryUrlInput').value.trim();
         const content = document.getElementById('summaryInput').value.trim();
-        if (!content) { showToast('요약할 내용을 입력해주세요.', true); return; }
+        if (!url && !content) { showToast('URL 또는 텍스트를 입력해주세요.', true); return; }
+
+        const isUrl    = !!url;
+        const endpoint = isUrl ? '/api/alan/page/summary/url' : '/api/alan/page/summary';
+        const body     = isUrl ? { url: url } : { content: content };
 
         showLoading('페이지를 요약하고 있습니다...');
 
-        fetch('/api/alan/page/summary', {
+        fetch(endpoint, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': getCsrfToken() },
-            body: JSON.stringify({ content: content })
+            body: JSON.stringify(body)
         })
             .then(function (r) {
                 if (!r.ok) return parseErrorMessage(r).then(function (msg) { throw new Error(msg); });
@@ -189,25 +218,33 @@ window.addEventListener('DOMContentLoaded', function () {
 
                 text = text.trim();
                 showResult('summaryResult', 'summaryResultText', text);
-                saveHistory('summary', content, text);
+                saveHistory('summary', isUrl ? url : content, text);
             })
             .catch(function (err) { showToast(err.message || '오류가 발생했습니다.', true); })
             .finally(hideLoading);
     });
 
-    // 페이지 번역 POST /api/alan/page/translate
-    document.getElementById('translateBtn').addEventListener('click', function () {
-        const raw = document.getElementById('translateInput').value.trim();
-        if (!raw) { showToast('번역할 텍스트를 입력해주세요.', true); return; }
 
-        const contents = raw.split('\n').filter(function (l) { return l.trim(); });
+    // 페이지 번역
+    // URL 입력 시 → POST /api/alan/page/translate/url
+    // 텍스트 입력 시 → POST /api/alan/page/translate
+    document.getElementById('translateBtn').addEventListener('click', function () {
+        const url = document.getElementById('translateUrlInput').value.trim();
+        const raw = document.getElementById('translateInput').value.trim();
+        if (!url && !raw) { showToast('URL 또는 텍스트를 입력해주세요.', true); return; }
+
+        const isUrl    = !!url;
+        const endpoint = isUrl ? '/api/alan/page/translate/url' : '/api/alan/page/translate';
+        const body     = isUrl
+            ? { url: url }
+            : { contents: raw.split('\n').filter(function (l) { return l.trim(); }) };
 
         showLoading('번역하고 있습니다...');
 
-        fetch('/api/alan/page/translate', {
+        fetch(endpoint, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': getCsrfToken() },
-            body: JSON.stringify({ contents: contents })
+            body: JSON.stringify(body)
         })
             .then(function (r) {
                 if (!r.ok) return parseErrorMessage(r).then(function (msg) { throw new Error(msg); });
@@ -227,40 +264,27 @@ window.addEventListener('DOMContentLoaded', function () {
 
                 text = text.trim();
                 showResult('translateResult', 'translateResultText', text);
-                saveHistory('translate', raw, text);
+                saveHistory('translate', isUrl ? url : raw, text);
             })
             .catch(function (err) { showToast(err.message || '오류가 발생했습니다.', true); })
             .finally(hideLoading);
     });
 
-    // 유튜브 자막 요약 POST /api/alan/youtube/summary
+    // 유튜브 URL 자막 자동 추출 후 요약 → POST /api/alan/youtube/url
     document.getElementById('youtubeBtn').addEventListener('click', function () {
-        const raw = document.getElementById('youtubeInput').value.trim();
-        if (!raw) { showToast('유튜브 자막을 입력해주세요.', true); return; }
+        const url = document.getElementById('youtubeUrlInput').value.trim();
+        if (!url) { showToast('YouTube URL을 입력해주세요.', true); return; }
+        if (!url.includes('youtube.com') && !url.includes('youtu.be')) {
+            showToast('올바른 YouTube URL을 입력해주세요.', true);
+            return;
+        }
 
-        // AlanAiDto.YoutubeSubtitleRequest 형식에 맞게 변환
-        // Chapter 구조: {chapterIdx, chapterTitle, text:[{timestamp, content}]}
-        const lines = raw.split('\n')
-            .map(function (line) { return line.trim(); })
-            .filter(function (line) { return line.length > 0; });
+        showLoading('YouTube 자막을 가져오고 있습니다...');
 
-        const subtitleTexts = lines.map(function (line, idx) {
-            // "0:00 내용" 형식이면 타임스탬프 분리, 아니면 순번으로 대체
-            const match = line.match(/^(\d+:\d+)\s+(.+)/);
-            return match
-                ? { timestamp: match[1], content: match[2] }
-                : { timestamp: '0:' + String(idx).padStart(2, '0'), content: line };
-        });
-
-        // @JsonProperty("chapter_idx"), @JsonProperty("chapter_title") 때문에 snake_case로 전송
-        const subtitle = [{ chapter_idx: 0, chapter_title: '전체 자막', text: subtitleTexts }];
-
-        showLoading('유튜브 자막을 요약하고 있습니다...');
-
-        fetch('/api/alan/youtube/summary', {
+        fetch('/api/alan/youtube/url', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': getCsrfToken() },
-            body: JSON.stringify({ subtitle: subtitle })
+            body: JSON.stringify({ url: url })
         })
             .then(function (r) {
                 if (!r.ok) return parseErrorMessage(r).then(function (msg) { throw new Error(msg); });
@@ -295,11 +319,14 @@ window.addEventListener('DOMContentLoaded', function () {
 
                 text = text.trim();
                 showResult('youtubeResult', 'youtubeResultText', text);
-                saveHistory('youtube', raw, text);
+                saveHistory('youtube', url, text);
             })
             .catch(function (err) { showToast(err.message || '오류가 발생했습니다.', true); })
             .finally(hideLoading);
     });
+
+
+
 
 
     // AI 질문 GET /api/alan/question
@@ -445,18 +472,23 @@ window.addEventListener('DOMContentLoaded', function () {
         document.getElementById('panel' + cfg.tabId.charAt(0).toUpperCase() + cfg.tabId.slice(1))
             .classList.remove('hidden');
 
-        // 입력값 복원
-        document.getElementById(cfg.inputId).value = item.input;
+        // 입력값 복원 - URL 이력이면 urlInput에, 텍스트 이력이면 textarea에
+        const isUrl = item.input.startsWith('http://') || item.input.startsWith('https://');
 
-        // 글자 수 카운터 갱신
-        const countMap = {
-            summary:   'summaryCount',
-            translate: 'translateCount',
-            youtube:   'youtubeCount'
-        };
-        const countEl = document.getElementById(countMap[item.type]);
-        if (countEl) {
-            countEl.textContent = item.input.length.toLocaleString() + '자';
+        if (item.type === 'summary') {
+            document.getElementById('summaryUrlInput').value = isUrl ? item.input : '';
+            document.getElementById('summaryInput').value    = isUrl ? '' : item.input;
+            document.getElementById('summaryCount').textContent = isUrl ? '0자' : item.input.length.toLocaleString() + '자';
+        } else if (item.type === 'translate') {
+            document.getElementById('translateUrlInput').value = isUrl ? item.input : '';
+            document.getElementById('translateInput').value    = isUrl ? '' : item.input;
+            document.getElementById('translateCount').textContent = isUrl ? '0자' : item.input.length.toLocaleString() + '자';
+        } else if (item.type === 'youtube') {
+            document.getElementById('youtubeUrlInput').value = item.input;
+        } else {
+            document.getElementById(cfg.inputId).value = item.input;
+            const countEl = document.getElementById('questionCount');
+            if (countEl && item.type === 'question') { countEl.textContent = item.input.length.toLocaleString() + '자'; }
         }
 
         // 결과 복원

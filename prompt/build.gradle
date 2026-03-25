@@ -71,6 +71,12 @@ dependencies {
     implementation 'com.github.iamport:iamport-rest-client-java:0.2.23'
 
     implementation 'com.fasterxml.jackson.core:jackson-databind'
+
+    // 웹페이지 HTML 파싱 (WebPageFetcher)
+    implementation 'org.jsoup:jsoup:1.18.3'
+
+    // YouTube 자막 추출 라이브러리
+    implementation 'io.github.thoroldvix:youtube-transcript-api:0.4.0'
 }
 
 tasks.named('test') {
