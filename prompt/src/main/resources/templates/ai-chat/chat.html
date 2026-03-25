@@ -97,37 +97,32 @@
                     <button data-model="alan-4.1" aria-pressed="false">alan-4.1</button>
                     <button data-model="alan-4-turbo" aria-pressed="false">alan-4-turbo</button>
                 </div>
-                <a href="/ai-tools" id="btnAiTools">AI 도구</a>
-            </div>
-        </div>
-    </div>
+                <a href="/ai-tools">AI 도구</a>
+                <section id="chatView" class="hidden" aria-label="채팅 화면">
 
-    <!-- 채팅 뷰 -->
-    <section id="chatView" class="hidden" aria-label="채팅 화면">
+                    <div id="messagesWrap">
+                        <div id="messages" role="log" aria-live="polite" aria-label="채팅 메시지 목록"></div>
+                    </div>
 
-        <div id="messagesWrap">
-            <div id="messages" aria-live="polite" aria-label="채팅 메시지 목록"></div>
-        </div>
+                    <!-- 채팅 입력 영역 -->
+                    <div id="chatInputArea">
+                        <div class="inputBox">
+                            <textarea id="userInput" rows="1" placeholder="무엇을 도와드릴까요?" aria-label="채팅 메시지 입력"></textarea>
+                            <button id="sendBtn">
+                                <span class="srOnly">전송</span>
+                            </button>
+                        </div>
+                        <div class="toolBar">
+                            <div class="modelSelector" id="chatModelSelector">
+                                <button data-model="alan-4.0" aria-pressed="true">alan-4.0</button>
+                                <button data-model="alan-4.1" aria-pressed="false">alan-4.1</button>
+                                <button data-model="alan-4-turbo" aria-pressed="false">alan-4-turbo</button>
+                            </div>
+                            <a href="/ai-tools" id="btnAiTools">AI 도구</a>
+                        </div>
+                    </div>
 
-        <!-- 채팅 입력 영역 -->
-        <div id="chatInputArea">
-            <div class="inputBox">
-                <textarea id="userInput" rows="1" placeholder="무엇을 도와드릴까요?" aria-label="채팅 메시지 입력"></textarea>
-                <button id="sendBtn">
-                    <span class="srOnly">전송</span>
-                </button>
-            </div>
-            <div class="toolBar">
-                <div class="modelSelector" id="chatModelSelector">
-                    <button data-model="alan-4.0" aria-pressed="true">alan-4.0</button>
-                    <button data-model="alan-4.1" aria-pressed="false">alan-4.1</button>
-                    <button data-model="alan-4-turbo" aria-pressed="false">alan-4-turbo</button>
-                </div>
-                <a href="/ai-tools" id="btnAiTools">AI 도구</a>
-            </div>
-        </div>
-
-    </section>
+                </section>
 
 </main>
 
